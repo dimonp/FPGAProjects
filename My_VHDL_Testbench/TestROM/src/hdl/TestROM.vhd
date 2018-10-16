@@ -4,9 +4,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library altera;
+use altera.altera_syn_attributes.all;
+
 entity TestROM is
 
     generic (
+        DATA_FILE : string := "TestROM.hex";
         DATA_WIDTH : natural := 8;
         ADDR_WIDTH : natural := 8
     );
@@ -14,7 +18,7 @@ entity TestROM is
     port (
         clk     : in std_logic;
         addr    : in natural range 0 to 2**ADDR_WIDTH - 1;
-        q       : out std_logic_vector((DATA_WIDTH -1) downto 0)
+        q       : out std_logic_vector((DATA_WIDTH-1) downto 0)
     );
 
 end entity;
@@ -27,8 +31,7 @@ architecture rtl of TestROM is
 
     signal rom : memory_t;
     attribute ram_init_file : string; -- Quartus specific
-    attribute ram_init_file of rom : signal is "TestROM.hex";
-
+    attribute ram_init_file of rom : signal is DATA_FILE;
 begin
 
     process(clk)
