@@ -11,7 +11,7 @@ entity VGA_Sync is
         pixelClkN   : out std_logic);
 end entity VGA_Sync;
 
-architecture Behavioral of VGA_Sync is
+architecture rtl of VGA_Sync is
 
     -- 1280 x 1024 at 60 Hz
     -- Horizontal timing
@@ -58,4 +58,4 @@ begin
         end if;
     end process;
 
-end architecture Behavioral;
+end architecture rtl;

@@ -9,7 +9,7 @@ entity Stripes_Gen is
         rgb         : out std_logic_vector(15 downto 0));
 end entity Stripes_Gen;
 
-architecture Behavioral of Stripes_Gen is
+architecture rtl of Stripes_Gen is
     constant BAR_WIDTH : natural := 160; -- =1280/8
 
     signal bar      : unsigned(7 downto 0);
@@ -41,4 +41,4 @@ begin
         end if;
     end process;
 
-end architecture Behavioral;
+end architecture rtl;
