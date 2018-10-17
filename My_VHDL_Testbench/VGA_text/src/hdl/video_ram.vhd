@@ -14,7 +14,8 @@ entity Video_RAM is
     );
     port (
         clk     : in std_logic;
-        addr    : in natural range 0 to RAM_SIZE-1;
+        raddr   : in natural range 0 to RAM_SIZE-1;
+        waddr   : in natural range 0 to RAM_SIZE-1;
         we      : in std_logic := '0';
         data    : in std_logic_vector(15 downto 0);
         q       : out std_logic_vector(15 downto 0));
@@ -39,11 +40,11 @@ begin
     begin
         if(rising_edge(clk)) then
             if(we = '1') then
-                ram(addr) <= data;
+                ram(waddr) <= data;
             end if;
     
             -- Register the address for reading
-            addr_reg <= addr;
+            addr_reg <= raddr;
         end if;
     end process;
 
