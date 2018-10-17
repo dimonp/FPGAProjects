@@ -68,21 +68,21 @@ begin
             state <= xp;
         elsif (rising_edge(q(21))) then
             case state is
-                when xp=>
+                when xp =>
                     if x = 79-it then
                         state <= yp;
                     else
                         x <= x + 1;
                         state <= xp;
                     end if;
-                when yp=>
+                when yp =>
                     if y = 29-it then
                         state <= xn;
                     else
                         y <= y + 1;
                         state <= yp;
                     end if;
-                when xn=>
+                when xn =>
                     if x = it then
                         state <= yn;
                     else
