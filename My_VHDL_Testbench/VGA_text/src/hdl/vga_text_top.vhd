@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use ieee.std_logic_unsigned.all;
 
 entity VGA_text_top is
@@ -15,7 +16,44 @@ entity VGA_text_top is
 end entity VGA_text_top;
 
 architecture behavioral of VGA_text_top is
-    constant FIFO_SIZE : natural := 20;
+    constant FIFO_SIZE  : natural := 20;
+    constant DONE       : string := "Done!";
+    constant DONE_X     : natural := 35;
+    constant DONE_Y     : natural := 6;
+
+    type state_type is (xp, yp, xn, yn, itp, fin);
+
+    signal wen      : std_logic := '0';
+    signal addr     : natural range 0 to 2400;
+    signal addrH, addrT : natural range 0 to 2400;
+    signal data     : std_logic_vector(15 downto 0);
+    signal q        : std_logic_vector(23 downto 0) := (others => '0');
+    signal isDone   : boolean := false;
+
+    type t_Coords is record
+        xc : natural range 0 to 79;
+        yc : natural range 0 to 39;
+    end record;
+    type t_Coords_fifo is array(0 to FIFO_SIZE-1) of t_Coords;
+    signal fifo : t_Coords_fifo := (others=>(others=>0));
+
+    function calcAddr(x : natural range 0 to 79;
+                      y : natural range 0 to 29) return natural is
+    begin
+        return y * 80 + x;
+    end function calcAddr;
+
+    procedure updateFifo(x : natural range 0 to 79;
+                         y : natural range 0 to 29) is
+    begin
+        -- This loop is unrolled by the synthesis tool.
+        for i in FIFO_SIZE-1 downto 1 loop
+            fifo(i) <= fifo(i-1);
+        end loop;
+
+        -- insert into position zero
+        fifo(0) <= (xc=>x, yc=>y);
+    end procedure updateFifo;
 
     component VGA_text
         port (
@@ -30,27 +68,11 @@ architecture behavioral of VGA_text_top is
             g       : out std_logic_vector(5 downto 0);
             b       : out std_logic_vector(4 downto 0));
     end component;
-
-    type state_type is (xp, yp, xn, yn, itp, fin);
-    
-    signal wen      : std_logic := '0';
-    signal addr     : natural range 0 to 2400;
-    signal addrH, addrT : natural range 0 to 2400;
-    signal data     : std_logic_vector(15 downto 0);
-    signal q        : std_logic_vector(23 downto 0) := (others => '0');
-
-    type t_Coords is record
-        xc : natural range 0 to 79;
-        yc : natural range 0 to 39;
-    end record;
-    type t_Coords_fifo is array(0 to FIFO_SIZE-1) of t_Coords;
-    signal fifo : t_Coords_fifo := (others=>(others=>0));
-
 begin
     vgaText_inst : VGA_text port map (
             clock => clk,
             reset => not rst,
-            wen   => not q(21),
+            wen   => not q(20),
             addr  => addr,
             data  => data,
             hsync => vgaHs,
@@ -68,16 +90,20 @@ begin
 
     -- State Machine
     -- 12 Hz
-    process (q(21), rst)
+    process (q(20), rst)
         variable x      : natural range 0 to 79 := 0;
         variable y      : natural range 0 to 39 := 0;
         variable it     : natural range 0 to 20 := 0;
         variable state  : state_type := xp;
     begin   
         if rst = '0' then
+            x := 0;
+            y := 0;
+            it:= 0;
             state := xp;
-        elsif rising_edge(q(21)) then
-            if q(22) = '1' then 
+            isDone <= false;
+        elsif rising_edge(q(20)) then
+            if q(21) = '1' then 
                 case state is
                     when xp =>
                         if x = 79-it then
@@ -116,30 +142,35 @@ begin
                         end if;
                     when fin =>
                         state := fin;
+                        isDone <= true;
                 end case;
 
-                -- This loop is unrolled by the synthesis tool.
-                for i in FIFO_SIZE-1 downto 1 loop
-                    fifo(i) <= fifo(i-1);
-                end loop;
-
-                -- insert into position zero
-                fifo(0) <= (xc=>x, yc=>y);
+                updateFifo(x, y);
             end if;
         end if;
     end process;
     
-    process(q(21))
+    process(q(20))
+        variable idx : natural range 0 to DONE'length-1 := 0;
     begin
-        if rising_edge(q(21)) then
-            if q(22) = '1' then
-                addr <= fifo(0).yc * 80 + fifo(0).xc;
-                data <= (others=>'1');
-            else
-                addr <= fifo(FIFO_SIZE-1).yc * 80 + fifo(FIFO_SIZE-1).xc;
-                data <= (others=>'0');
+        if rising_edge(q(20)) then
+            if isDone then -- show done message
+                if idx < DONE'length then
+                    idx := idx + 1;
+                end if;
+
+                addr <= calcAddr(DONE_X + idx, DONE_Y);
+                data <= "00000010" &  std_logic_vector(to_unsigned(character'pos(DONE(idx)),8));
+            else -- draw snake
+                if q(21) = '1' then
+                    addr <= calcAddr(fifo(0).xc, fifo(0).yc);
+                    data <= (others=>'1');
+                else
+                    addr <= calcAddr(fifo(FIFO_SIZE-1).xc, fifo(FIFO_SIZE-1).yc);
+                    data <= (others=>'0');
+                end if;
             end if;
         end if;
     end process;
-
+    
 end architecture behavioral;
