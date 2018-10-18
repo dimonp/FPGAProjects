@@ -89,12 +89,12 @@ architecture behavioral of VGA_text is
     signal vgaBlank         : std_logic;
     signal pixelX, pixelY   : integer;
     signal textAddr         : natural;
-    signal textData, textData0, textData1 : std_logic_vector(15 downto 0);
+    signal textData, textData0: std_logic_vector(15 downto 0);
     signal symAddr          : natural;
     signal symData          : std_logic_vector(0 to 7);
     
-    signal symX, symX0, symX1  : integer;
-    signal symY, symY0      : integer;
+    signal symX, symX0      : integer;
+    signal symY             : integer;
 
 begin
     clkGen : Clk_gen port map (
@@ -136,7 +136,7 @@ begin
             waddr   => addr,
             we      => wen,
             data    => data,
-            q       => textData1);
+            q       => textData);
 
     fontROM : Font_ROM 
         generic map (
@@ -165,27 +165,20 @@ begin
             textY := pixelY/16;
 
             -- 0
-            symX0 <= (pixelX + 2) mod 8;
-            symY0 <= pixelY mod 16;
+            symX <= (pixelX + 2) mod 8;
+            symY <= pixelY mod 16;
             textAddr <= textY*DISPLAY_WIDTH + textX;
 
             -- 1
-            symX1 <= symX0;
-            symY <= symY0;
-
-            -- 2
-            symCode := to_integer(unsigned(textData1(7 downto 0)));
+            symCode := to_integer(unsigned(textData(7 downto 0)));
             symAddr <= symCode*16 + symY;
-            textData0 <= textData1; 
+            textData0 <= textData; 
+            symX0 <= symX;
 
-            -- 3
-            symX <= symX1;
-            textData <= textData0; 
-
-            if symData(symX) = '1' then
-                vgaColor := palleteColor(to_integer(unsigned(textData(11 downto 8))));
+            if symData(symX0) = '1' then
+                vgaColor := palleteColor(to_integer(unsigned(textData0(11 downto 8))));
             else
-                vgaColor := palleteColor(to_integer(unsigned(textData(15 downto 12))));
+                vgaColor := palleteColor(to_integer(unsigned(textData0(15 downto 12))));
             end if;
 
             if vgaBlank = '0' then
