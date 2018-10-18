@@ -12,23 +12,23 @@ architecture sim of t21_functionTb is
     signal clk          : std_logic := '1';
     signal nRst         : std_logic := '0';
     signal NorthRed     : std_logic;
-    signal NorthYellow     : std_logic;
-    signal NorthGreen     : std_logic;
-    signal WestRed         : std_logic;
-    signal WestYellow     : std_logic;
-    signal WestGreen     : std_logic;
+    signal NorthYellow  : std_logic;
+    signal NorthGreen   : std_logic;
+    signal WestRed      : std_logic;
+    signal WestYellow   : std_logic;
+    signal WestGreen    : std_logic;
 begin
     -- The Device Under Test (DUT)
     iTrafficLights : entity work.t21_trafficLight(rtl)
         generic map(clockFrequency => clockFrequency)
         port map(
             clk         => clk,
-            nRst         => nRst,
-            NorthRed     => NorthRed,     
+            nRst        => nRst,
+            NorthRed    => NorthRed,     
             NorthYellow => NorthYellow,
-            NorthGreen     => NorthGreen, 
+            NorthGreen  => NorthGreen, 
             WestRed     => WestRed,     
-            WestYellow     => WestYellow, 
+            WestYellow  => WestYellow, 
             WestGreen   => WestGreen);
 
     -- Process generating the clock

@@ -49,8 +49,12 @@ timing
 *example*
 *sopc_*
 PLLJ_PLLSPE_INFO.txt # The generated PLL specification file
+.modelsim
+.qsys_edit
+
 .metadata
 .settings
 .project
 .library_mapping.xml
 .README.md.html
+
