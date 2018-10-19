@@ -96,6 +96,8 @@ architecture behavioral of VGA_text is
     signal symX, symX0      : integer;
     signal symY             : integer;
 
+    signal vgaColor     : std_logic_vector(15 downto 0);
+
 begin
     clkGen : Clk_gen port map (
             areset => reset,
@@ -158,39 +160,33 @@ begin
     process (vgaClk) is
         variable textX, textY : integer;
         variable symCode      : integer range 0 to 255;
-        variable vgaColor     : std_logic_vector(15 downto 0);
     begin
         if rising_edge(vgaClk) then
-            textX := (pixelX + 2)/8;
+            textX := (pixelX + 3)/8;
             textY := pixelY/16;
 
             -- 0
-            symX <= (pixelX + 2) mod 8;
+            symX <= (pixelX + 3) mod 8;
             symY <= pixelY mod 16;
             textAddr <= textY*DISPLAY_WIDTH + textX;
 
             -- 1
-            symCode := to_integer(unsigned(textData(7 downto 0)));
+            symCode := 48; --to_integer(unsigned(textData(7 downto 0)));
             symAddr <= symCode*16 + symY;
             textData0 <= textData; 
             symX0 <= symX;
 
+            -- 2
             if symData(symX0) = '1' then
-                vgaColor := palleteColor(to_integer(unsigned(textData0(11 downto 8))));
+                vgaColor <= palleteColor(to_integer(unsigned(textData0(11 downto 8))));
             else
-                vgaColor := palleteColor(to_integer(unsigned(textData0(15 downto 12))));
-            end if;
-
-            if vgaBlank = '0' then
-                r <= vgaColor(15 downto 11);
-                g <= vgaColor(10 downto 5);
-                b <= vgaColor(4 downto 0);
-            else
-                r <= (others=>'0');
-                g <= (others=>'0');
-                b <= (others=>'0');
+                vgaColor <= palleteColor(to_integer(unsigned(textData0(15 downto 12))));
             end if;
         end if;
     end process;
+
+    r <= vgaColor(15 downto 11) when vgaBlank = '0' else "00000";
+    g <= vgaColor(10 downto 5) when vgaBlank = '0' else "000000";
+    b <= vgaColor(4 downto 0) when vgaBlank = '0' else "00000";
 
 end architecture behavioral;

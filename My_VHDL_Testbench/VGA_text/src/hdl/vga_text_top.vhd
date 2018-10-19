@@ -90,7 +90,7 @@ begin
 
     -- State Machine
     -- 12 Hz
-    process (q(20), rst)
+    process (q(21), rst)
         variable x      : natural range 0 to 79 := 0;
         variable y      : natural range 0 to 39 := 0;
         variable it     : natural range 0 to 20 := 0;
@@ -102,51 +102,49 @@ begin
             it:= 0;
             state := xp;
             isDone <= false;
-        elsif rising_edge(q(20)) then
-            if q(21) = '1' then 
-                case state is
-                    when xp =>
-                        if x = 79-it then
-                            state := yp;
-                        else
-                            x := x + 1;
-                            state := xp;
-                        end if;
-                    when yp =>
-                        if y = 29-it then
-                            state := xn;
-                        else
-                            y := y + 1;
-                            state := yp;
-                        end if;
-                    when xn =>
-                        if x = it then
-                            state := yn;
-                        else
-                            x := x - 1;
-                            state := xn;
-                        end if;
-                    when yn =>
-                        if y = it + 1 then
-                            state := itp;
-                        else
-                            y := y - 1;
-                            state := yn;
-                        end if;
-                    when itp =>
-                        if it = 10 then
-                            state := fin;
-                        else
-                            it := it + 1;
-                            state := xp;
-                        end if;
-                    when fin =>
+        elsif rising_edge(q(21)) then
+            case state is
+                when xp =>
+                    if x = 79-it then
+                        state := yp;
+                    else
+                        x := x + 1;
+                        state := xp;
+                    end if;
+                when yp =>
+                    if y = 29-it then
+                        state := xn;
+                    else
+                        y := y + 1;
+                        state := yp;
+                    end if;
+                when xn =>
+                    if x = it then
+                        state := yn;
+                    else
+                        x := x - 1;
+                        state := xn;
+                    end if;
+                when yn =>
+                    if y = it + 1 then
+                        state := itp;
+                    else
+                        y := y - 1;
+                        state := yn;
+                    end if;
+                when itp =>
+                    if it = 10 then
                         state := fin;
-                        isDone <= true;
-                end case;
+                    else
+                        it := it + 1;
+                        state := xp;
+                    end if;
+                when fin =>
+                    state := fin;
+                    isDone <= true;
+            end case;
 
-                updateFifo(x, y);
-            end if;
+            updateFifo(x, y);
         end if;
     end process;
     
