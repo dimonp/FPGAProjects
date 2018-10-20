@@ -70,6 +70,7 @@ architecture behavioral of Snake_Game_top is
             i_clk     : in  std_logic;
             i_rst     : in  std_logic;
             i_ps2Code : in  std_logic_vector(7 downto 0);
+            i_brake   : in  natural;
             o_xc      : out natural range 0 to DISPLAY_WIDTH - 1;
             o_yc      : out natural range 0 to DISPLAY_HEIGHT - 1;
             o_data    : out std_logic_vector(15 downto 0));
@@ -80,7 +81,7 @@ begin
     vgaText_inst : VGA_text port map (
             clock => clk,
             reset => not rst,
-            wen   => not q(20),
+            wen   => not q(16),
             addr  => addr,
             data  => data,
             hsync => vgaHs,
@@ -100,9 +101,10 @@ begin
         
     snake_inst: component Snake
         port map(
-            i_clk     => q(20),
+            i_clk     => q(16),
             i_rst     => not rst,
             i_ps2Code => ps2Code,
+            i_brake   => 10,
             o_xc      => snake_xc,
             o_yc      => snake_yc,
             o_data    => data

@@ -11,6 +11,7 @@ entity Snake is
         i_clk     : in  std_logic;
         i_rst     : in  std_logic;
         i_ps2Code : in  std_logic_vector(7 downto 0);
+        i_brake   : in  natural;
         o_xc      : out natural range 0 to DISPLAY_WIDTH - 1;
         o_yc      : out natural range 0 to DISPLAY_HEIGHT - 1;
         o_data    : out std_logic_vector(15 downto 0)
@@ -20,8 +21,6 @@ end entity Snake;
 architecture behavioral of Snake is
     type t_Snake_state is (sRunUp, sRunDown, sRunLeft, sRunRight, sStop);
     type t_Draw_state is (sHead, sBody, sTail);
-
-    signal clkDivider : unsigned(1 downto 0) := (others => '0');
 
     type t_Coords is record
         xc : natural range 0 to DISPLAY_WIDTH - 1;
@@ -44,21 +43,13 @@ architecture behavioral of Snake is
 
 begin
 
-    process(i_rst, i_clk)
-    begin
-        if (i_rst = '1') then
-            clkDivider <= (others => '0');
-        elsif (rising_edge(i_clk)) then
-            clkDivider <= clkDivider + 1;
-        end if;
-    end process;
-
-    process(clkDivider(1), i_rst)
+    process(i_clk, i_rst)
         variable x       : natural range 0 to DISPLAY_WIDTH - 1  := 0;
         variable y       : natural range 0 to DISPLAY_HEIGHT - 1 := 0;
         variable state   : t_Snake_state                         := sStop;
         variable delta_x : integer;
         variable delta_y : integer;
+        variable brake   : natural :=0 ;
 
         procedure changeState(currentState : t_Snake_state) is
         begin
@@ -110,31 +101,36 @@ begin
             x      := 0;
             y      := 0;
             state  := sStop;
-        elsif rising_edge(clkDivider(1)) then
-            case state is
-                when sRunUp =>
-                    delta_x := 0;
-                    delta_y := -1;
-                when sRunDown =>
-                    delta_x := 0;
-                    delta_y := 1;
-                when sRunLeft =>
-                    delta_x := -1;
-                    delta_y := 0;
-                when sRunRight =>
-                    delta_x := 1;
-                    delta_y := 0;
-                when sStop =>
-                    delta_x := 1;
-                    delta_y := 0;
-            end case;
-
+        elsif rising_edge(i_clk) then
             changeState(state);
-
-            x := updateX(x, delta_x);
-            y := updateY(y, delta_y);
-
-            updateFifo(x, y);
+            
+            if brake = 0 then
+                brake := i_brake;
+                case state is
+                    when sRunUp =>
+                        delta_x := 0;
+                        delta_y := -1;
+                    when sRunDown =>
+                        delta_x := 0;
+                        delta_y := 1;
+                    when sRunLeft =>
+                        delta_x := -1;
+                        delta_y := 0;
+                    when sRunRight =>
+                        delta_x := 1;
+                        delta_y := 0;
+                    when sStop =>
+                        delta_x := 1;
+                        delta_y := 0;
+                end case;
+    
+                x := updateX(x, delta_x);
+                y := updateY(y, delta_y);
+    
+                updateFifo(x, y);
+            else
+                brake := brake - 1;
+            end if;
         end if;
     end process;
 
