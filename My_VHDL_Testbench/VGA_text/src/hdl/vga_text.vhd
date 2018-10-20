@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity VGA_text is
     port(
-        clock   : in std_logic;
+        clock   : in std_logic; -- VGA clock * 2
         reset   : in std_logic;
         wen     : in std_logic;
         addr    : in natural range 0 to 2400;
@@ -171,7 +171,7 @@ begin
             textAddr <= textY*DISPLAY_WIDTH + textX;
 
             -- 1
-            symCode := 48; --to_integer(unsigned(textData(7 downto 0)));
+            symCode := to_integer(unsigned(textData(7 downto 0)));
             symAddr <= symCode*16 + symY;
             textData0 <= textData; 
             symX0 <= symX;
