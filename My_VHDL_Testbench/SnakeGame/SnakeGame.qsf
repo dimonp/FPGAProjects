@@ -80,6 +80,12 @@ set_global_assignment -name EDA_TEST_BENCH_NAME Snake_Game_Tb -section_id eda_si
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id Snake_Game_Tb
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME Snake_Game_Tb -section_id Snake_Game_Tb
 set_global_assignment -name EDA_TEST_BENCH_FILE test/hdl/snake_game_tb.vhd -section_id Snake_Game_Tb
+set_location_assignment PIN_M15 -to rst
+set_location_assignment PIN_B1 -to ps2Clock
+set_location_assignment PIN_C2 -to ps2Data
+set_global_assignment -name VHDL_FILE src/hdl/snake.vhd
+set_global_assignment -name VHDL_FILE lib/hdl/ps2_keyboard.vhd
+set_global_assignment -name VHDL_FILE lib/hdl/debounce.vhd
 set_global_assignment -name HEX_FILE 8X16.hex
 set_global_assignment -name VHDL_FILE test/hdl/snake_game_tb.vhd
 set_global_assignment -name VHDL_FILE src/hdl/vga_text.vhd
@@ -88,8 +94,4 @@ set_global_assignment -name VHDL_FILE src/hdl/snake_game_top.vhd
 set_global_assignment -name QIP_FILE pll/VideoRAM.qip
 set_global_assignment -name QIP_FILE pll/FontROM.qip
 set_global_assignment -name QIP_FILE pll/ClockGen.qip
-set_location_assignment PIN_M16 -to keyUp
-set_location_assignment PIN_A8 -to keyRight
-set_location_assignment PIN_B8 -to keyLeft
-set_location_assignment PIN_M15 -to keyDown
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
