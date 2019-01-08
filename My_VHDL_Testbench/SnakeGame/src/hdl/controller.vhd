@@ -2,20 +2,21 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.snake_game.all;
+
 entity Controller is
     generic(
-        MAX_WIDTH  : natural := 80;
-        MAX_HEIGHT : natural := 30;
-        INITIAL_X      : natural := 40;
-        INITIAL_Y      : natural := 10);
+        MAX_WIDTH   : natural := 80;
+        MAX_HEIGHT  : natural := 30;
+        INITIAL_X   : natural := 40;
+        INITIAL_Y   : natural := 10);
     port(
         i_clk     : in  std_logic;
         i_rst     : in  std_logic;
         i_ps2Code : in  std_logic_vector(7 downto 0);
         i_brake   : in  natural;
         i_en      : in  std_logic;
-        o_xc      : out natural range 0 to MAX_WIDTH - 1;
-        o_yc      : out natural range 0 to MAX_HEIGHT - 1);
+        o_coords  : out t_Coords);
 end entity Controller;
 
 architecture behavioral of Controller is
@@ -23,8 +24,7 @@ architecture behavioral of Controller is
 
     signal xc, yc : natural;
 begin
-    o_xc <= xc; 
-    o_yc <= yc; 
+    o_coords <= (xc, yc);
 
     process(i_clk, i_rst, i_en)
         variable state   : t_Move_state;
@@ -79,8 +79,8 @@ begin
 
     begin
         if i_rst = '0' then
-            xc   <= INITIAL_X;
-            yc   <= INITIAL_Y;
+            xc <= INITIAL_X;
+            yc <= INITIAL_Y;
             state  := sStop;
         elsif rising_edge(i_clk) and i_en = '1' then
             changeState(state);

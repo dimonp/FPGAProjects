@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
+use work.snake_game.all;
+
 entity Food is
     generic(
-        DISPLAY_WIDTH  : natural := 80;
-        DISPLAY_HEIGHT : natural := 30;
         MAX_WIDTH  : natural := 80;
         MAX_HEIGHT : natural := 30);
     port(
@@ -22,12 +22,6 @@ entity Food is
 end entity Food;
 
 architecture behavioral of Food is
-    function calcAddr(x : natural; y : natural) 
-            return std_logic_vector is
-    begin
-        return std_logic_vector(to_unsigned(y * DISPLAY_WIDTH + x, 12));
-    end function calcAddr;
-    
 begin
     
     process(i_clk, i_rst)
@@ -55,7 +49,7 @@ begin
                     fy := to_integer(unsigned(i_rnd(15 downto 8))) mod MAX_HEIGHT;
 
                     o_wen <= '1';
-                    o_addr <= calcAddr(fx, fy);
+                    o_addr <= calcAddr((fx, fy));
                     o_data <= "0000001000000011";
 
                     state := sIdle;

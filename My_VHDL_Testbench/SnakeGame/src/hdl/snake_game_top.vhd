@@ -4,6 +4,8 @@ use ieee.numeric_std.all;
 use ieee.std_logic_unsigned.all;
 use ieee.math_real.uniform;
 
+use work.snake_game.all;
+
 entity Snake_Game_top is
     port(
         clk         : in std_logic;
@@ -18,12 +20,6 @@ entity Snake_Game_top is
 end entity Snake_Game_top;
 
 architecture behavioral of Snake_Game_top is
-    constant DISPLAY_WIDTH  : natural := 80;
-    constant DISPLAY_HEIGHT : natural := 30;
-    constant FIFO_SIZE      : natural := 20;
-    constant INITIAL_X      : natural := 40;
-    constant INITIAL_Y      : natural := 10;
-
     signal addr             : std_logic_vector (11 downto 0);
     signal write_data, read_data  : std_logic_vector(15 downto 0);
     signal wen              : std_logic;
@@ -31,7 +27,7 @@ architecture behavioral of Snake_Game_top is
 
     signal ps2Code : std_logic_vector(7 downto 0);
 
-    signal xc, yc               : natural;
+    signal coords               : t_Coords;
     signal random               : std_logic_vector(15 downto 0);
 
     signal snake_en, snake_busy : std_logic;
@@ -46,7 +42,7 @@ architecture behavioral of Snake_Game_top is
     signal score_data           : std_logic_vector(15 downto 0);
 
     signal logic_en, logic_busy : std_logic;
-    signal logic_food          : std_logic;
+    signal logic_food           : std_logic;
     signal logic_loose          : std_logic;
     signal logic_score          : natural range 0 to 255;
 
@@ -54,12 +50,6 @@ architecture behavioral of Snake_Game_top is
     signal food_wen             : std_logic;
     signal food_addr            : std_logic_vector (11 downto 0);
     signal food_data            : std_logic_vector(15 downto 0);
-
-    function calcAddr(x : natural; y : natural) 
-            return std_logic_vector is
-    begin
-        return std_logic_vector(to_unsigned(y * DISPLAY_WIDTH + x, 12));
-    end function calcAddr;
 
     component VGA_text
         port (
@@ -89,16 +79,15 @@ architecture behavioral of Snake_Game_top is
         generic(
             MAX_WIDTH  : natural := 80;
             MAX_HEIGHT : natural := 30;
-            INITIAL_X      : natural := INITIAL_X;
-            INITIAL_Y      : natural := INITIAL_Y);
+            INITIAL_X  : natural := 40;
+            INITIAL_Y  : natural := 15);
         port(
             i_clk     : in  std_logic;
             i_rst     : in  std_logic;
             i_ps2Code : in  std_logic_vector(7 downto 0);
             i_brake   : in  natural;
             i_en      : in  std_logic;
-            o_xc      : out natural range 0 to DISPLAY_WIDTH - 1;
-            o_yc      : out natural range 0 to DISPLAY_HEIGHT - 1);
+            o_coords  : out t_Coords);
     end component;
 
     component Score
@@ -106,8 +95,6 @@ architecture behavioral of Snake_Game_top is
             i_clk       : in  std_logic;
             i_rst       : in  std_logic;
             i_en        : in  std_logic;
-            i_xc        : in  natural;
-            i_yc        : in  natural;
             i_score     : in  natural;
             o_busy      : out std_logic;
             o_wen       : out std_logic;
@@ -116,16 +103,12 @@ architecture behavioral of Snake_Game_top is
     end component;
 
     component Snake
-        generic(
-            FIFO_MAX_SIZE  : natural;
-            DISPLAY_WIDTH  : natural;
-            DISPLAY_HEIGHT : natural);
+        generic(FIFO_MAX_SIZE  : natural);
         port(
             i_clk     : in  std_logic;
             i_rst     : in  std_logic;
             i_en      : in  std_logic;
-            i_xc      : in  natural range 0 to DISPLAY_WIDTH - 1;
-            i_yc      : in  natural range 0 to DISPLAY_HEIGHT - 1;
+            i_coords  : in  t_Coords;
             i_data    : in  std_logic_vector(15 downto 0);
             o_busy    : out std_logic;
             o_wen     : out std_logic;
@@ -160,8 +143,6 @@ architecture behavioral of Snake_Game_top is
 
     component Food
         generic(
-            DISPLAY_WIDTH  : natural := 80;
-            DISPLAY_HEIGHT : natural := 30;
             MAX_WIDTH  : natural := 80;
             MAX_HEIGHT : natural := 30);
         port(
@@ -217,21 +198,15 @@ begin
             i_ps2Code  => ps2Code,
             i_brake    => 100,
             i_en       => '1',
-            o_xc       => xc,
-            o_yc       => yc
-        );
+            o_coords   => coords);
 
     snake_inst: component Snake
-        generic map(
-            FIFO_MAX_SIZE  => FIFO_SIZE,
-            DISPLAY_WIDTH  => DISPLAY_WIDTH,
-            DISPLAY_HEIGHT => DISPLAY_HEIGHT)
+        generic map(FIFO_MAX_SIZE  => 16)
         port map(
             i_clk     => cnt(16),
             i_rst     => rst,
             i_en      => snake_en,
-            i_xc      => xc,
-            i_yc      => yc,
+            i_coords  => coords,
             i_data    => read_data,
             o_busy    => snake_busy,
             o_wen     => snake_wen,
@@ -245,8 +220,6 @@ begin
             i_clk   => cnt(16),
             i_rst   => rst,
             i_en    => score_en,
-            i_xc    => xc,
-            i_yc    => yc,
             i_score => logic_score,
             o_busy  => score_busy,
             o_wen   => score_wen,
@@ -281,8 +254,6 @@ begin
 
     food_inst: component Food
         generic map(
-            DISPLAY_WIDTH  => DISPLAY_WIDTH,
-            DISPLAY_HEIGHT => DISPLAY_HEIGHT,
             MAX_WIDTH => DISPLAY_WIDTH,
             MAX_HEIGHT => DISPLAY_HEIGHT-1)
         port map(

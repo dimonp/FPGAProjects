@@ -2,13 +2,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.snake_game.all;
+
 entity Score is
     port(
         i_clk       : in  std_logic;
         i_rst       : in  std_logic;
         i_en        : in  std_logic;
-        i_xc        : in  natural;
-        i_yc        : in  natural;
         i_score     : in  natural;
         o_busy      : out std_logic;
         o_wen     : out std_logic;
@@ -19,12 +19,6 @@ end entity Score;
 architecture behavioral of Score is
     constant SCORE_X : natural := 10;
     constant SCORE_Y : natural := 29;
-
-    function calcAddr(x : natural; y : natural) 
-            return std_logic_vector is
-    begin
-        return std_logic_vector(to_unsigned(y * 80 + x, 12));
-    end function calcAddr;
 
     function to_ascii(digit : unsigned(3 downto 0)) return character is
     begin
@@ -63,7 +57,7 @@ begin
         type t_Draw_state is (sIdle, sPrepare, sDraw);
         variable state : t_Draw_state;
     
-        variable text   : string(1 to 19);
+        variable text   : string(1 to 9);
         variable idx    : natural;
         variable bcdX   : unsigned(11 downto 0);
         variable bcdY   : unsigned(11 downto 0);
@@ -85,17 +79,9 @@ begin
                         state := sIdle;
                     end if;
                 when sPrepare =>
-                    bcdX:= to_bcd(to_unsigned(i_xc, 8));
-                    bcdY:= to_bcd(to_unsigned(i_yc, 8));
                     bcdS:= to_bcd(to_unsigned(i_score, 8));
 
-                    text := "X=" & to_ascii(bcdX(11 downto 8)) 
-                        & to_ascii(bcdX(7 downto 4)) 
-                        & to_ascii(bcdX(3 downto 0))
-                        & "  Y=" & to_ascii(bcdY(11 downto 8))
-                        & to_ascii(bcdY(7 downto 4)) 
-                        & to_ascii(bcdY(3 downto 0))
-                        & "  S=" & to_ascii(bcdS(11 downto 8))
+                    text := "Score:" & to_ascii(bcdS(11 downto 8))
                         & to_ascii(bcdS(7 downto 4)) 
                         & to_ascii(bcdS(3 downto 0));
 
@@ -105,7 +91,7 @@ begin
                     if idx < text'length then
                         idx := idx + 1;
                         o_wen <= '1';
-                        o_addr <= calcAddr(SCORE_X + idx, SCORE_Y);
+                        o_addr <= calcAddr((SCORE_X + idx, SCORE_Y));
                         o_data <= "00000110" &  std_logic_vector(to_unsigned(character'pos(text(idx)), 8));
                         state := sDraw;
                     else
