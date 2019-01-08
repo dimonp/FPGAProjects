@@ -55,8 +55,6 @@ architecture behavioral of Snake_Game_top is
     signal food_addr            : std_logic_vector (11 downto 0);
     signal food_data            : std_logic_vector(15 downto 0);
 
-    signal txc, tyc               : natural;
-
     function calcAddr(x : natural; y : natural) 
             return std_logic_vector is
     begin
@@ -247,8 +245,8 @@ begin
             i_clk   => cnt(16),
             i_rst   => rst,
             i_en    => score_en,
-            i_xc    => txc,
-            i_yc    => tyc,
+            i_xc    => xc,
+            i_yc    => yc,
             i_score => logic_score,
             o_busy  => score_busy,
             o_wen   => score_wen,
@@ -314,8 +312,6 @@ begin
             snake_en <= '0';
             logic_en <= '0';
             food_en <= '0';
-            txc <= 0; 
-            tyc <= 0;
             state  := sIdle;
         elsif rising_edge(cnt(17)) then
             case state is
@@ -326,7 +322,6 @@ begin
                     end if;
                 when sPreFood =>
                     if logic_food = '1' then
-                        txc <= txc + 1; 
                         food_en <= '1';
                         state := sFood;
                     else
@@ -334,7 +329,6 @@ begin
                         state := sPreLogic;
                     end if;
                 when sFood =>
-                    tyc <= tyc + 1; 
                     if food_busy = '1'  then
                         food_en <= '0';
                         state := sFood;
