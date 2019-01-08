@@ -8,7 +8,8 @@ entity VGA_text is
         reset   : in std_logic;
         wen     : in std_logic;
         addr    : in std_logic_vector (11 downto 0);
-        data    : in std_logic_vector(15 downto 0);
+        dataW   : in std_logic_vector(15 downto 0);
+        dataR   : out std_logic_vector(15 downto 0);
         hsync   : out std_logic;
         vsync   : out std_logic;
         r       : out std_logic_vector(4 downto 0);
@@ -39,12 +40,12 @@ architecture behavioral of VGA_text is
     signal vgaBlank         : std_logic;
     signal pixelX, pixelY   : integer;
     signal textAddr         : std_logic_vector (11 downto 0);
-    signal textData, textData0, textData1, textData2 : std_logic_vector(15 downto 0);
+    signal textData, textData0, textData1 : std_logic_vector(15 downto 0);
     signal symAddr          : std_logic_vector (11 downto 0);
     signal symData          : std_logic_vector(0 to 7);
 
     signal symX, symX0, symX1, symX2   : integer;
-    signal symY, symY0, symY1, symY2   : integer;
+    signal symY, symY0      : integer;
 
     signal vgaColor         : std_logic_vector(15 downto 0);
 
@@ -133,9 +134,9 @@ begin
             wren_a      => '0',
             wren_b      => wen,
             data_a      => (others=>'0'),
-            data_b      => data,
+            data_b      => dataW,
             q_a         => textData,
-            q_b         => open);
+            q_b         => dataR);
 
     fontROM_inst : FontROM 
         port map (
