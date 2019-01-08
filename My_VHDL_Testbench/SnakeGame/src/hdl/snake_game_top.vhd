@@ -306,7 +306,7 @@ begin
     end process;
 
     process(cnt(17), rst)
-        type t_Game_state is (sIdle, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood);
+        type t_Game_state is (sIdle, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood, sLoose);
         variable state : t_Game_state;
     begin
         if rst = '0' then
@@ -369,10 +369,14 @@ begin
                         snake_en <= '0';
                         state := sSnake;
                     else
+                        state := sLoose;
+                    end if;    
+                when sLoose =>
+                    if logic_loose = '1' then
+                        state := sLoose;
+                    else
                         state := sIdle;
                     end if;    
---                when sDone =>
---                    state := sDone;
             end case;
         end if;
     end process;
