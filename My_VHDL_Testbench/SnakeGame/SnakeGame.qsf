@@ -83,6 +83,14 @@ set_global_assignment -name EDA_TEST_BENCH_FILE test/hdl/snake_game_tb.vhd -sect
 set_location_assignment PIN_M15 -to rst
 set_location_assignment PIN_B1 -to ps2Clock
 set_location_assignment PIN_C2 -to ps2Data
+set_global_assignment -name PROJECT_IP_REGENERATION_POLICY ALWAYS_REGENERATE_IP
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
+set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_global_assignment -name VHDL_FILE src/hdl/logic.vhd
+set_global_assignment -name VHDL_FILE src/hdl/food.vhd
+set_global_assignment -name VHDL_FILE lib/hdl/LFSR.vhd
+set_global_assignment -name VHDL_FILE src/hdl/score.vhd
+set_global_assignment -name VHDL_FILE src/hdl/controller.vhd
 set_global_assignment -name VHDL_FILE src/hdl/snake.vhd
 set_global_assignment -name VHDL_FILE lib/hdl/ps2_keyboard.vhd
 set_global_assignment -name VHDL_FILE lib/hdl/debounce.vhd

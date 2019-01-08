@@ -3,7 +3,7 @@
 Color stripes generator with FPGA board.  
 [Blogpost](http://we.easyelectronics.ru/blog/plis/2713.html)
 
-## Getting Started
+## Resources
 
 [INTEL&reg; FPGAS RESOURCE CENTER](https://www.intel.com/content/www/us/en/products/programmable/fpga/new-to-fpgas/resource-center/getting-started.html)  
 [NANDLAND Tutorial - Introduction to VHDL](https://www.nandland.com/vhdl/tutorials/tutorial-introduction-to-vhdl-for-beginners.html)  
@@ -14,7 +14,10 @@ Color stripes generator with FPGA board.
 [Introduce the VGA video standard](http://www.eng.ucy.ac.cy/theocharides/Courses/ECE664/VGA.pdf)  
 [VGA Controller (VHDL)](https://www.digikey.com/eewiki/pages/viewpage.action?pageId=15925278)
 
-##### Pin assigments (Cyclone IV EP4CE10F17C8)
+## Harware 
+Cyclone IV EP4CE10F17C8
+
+##### Pin assigments
 
 | Signal   |      Pin      |
 |----------|--------------:|

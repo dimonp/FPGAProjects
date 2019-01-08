@@ -1,6 +1,4 @@
-# VGA tester
-
-VGA signals simulation with FPGA board.
+# Text-mode Snake game
 
 ## Resources
 
@@ -13,7 +11,10 @@ VGA signals simulation with FPGA board.
 [Introduce the VGA video standard](http://www.eng.ucy.ac.cy/theocharides/Courses/ECE664/VGA.pdf)
 
 ## Harware 
-Cyclone IV EP4CE10F17C8
+FPGA Cyclone IV EP4CE10F17C8  
+PS/2 keyboard   
+640x480 16-bit RGB video   
+
 
 ##### Pin assigments
 
