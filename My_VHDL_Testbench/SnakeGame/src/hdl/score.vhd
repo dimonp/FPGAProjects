@@ -5,6 +5,10 @@ use ieee.numeric_std.all;
 use work.snake_game.all;
 
 entity Score is
+    generic(
+        SCORE_X     : natural := 10;
+        SCORE_Y     : natural := 29;
+        TEXT_COLOR  : std_logic_vector (7 downto 0) := "00000110");
     port(
         i_clk       : in  std_logic;
         i_rst       : in  std_logic;
@@ -17,9 +21,6 @@ entity Score is
 end entity Score;
 
 architecture behavioral of Score is
-    constant SCORE_X : natural := 10;
-    constant SCORE_Y : natural := 29;
-
     function to_ascii(digit : unsigned(3 downto 0)) return character is
     begin
         return character'val(to_integer(digit(3 downto 0)) + 48);
@@ -92,7 +93,7 @@ begin
                         idx := idx + 1;
                         o_wen <= '1';
                         o_addr <= calcAddr((SCORE_X + idx, SCORE_Y));
-                        o_data <= "00000110" &  std_logic_vector(to_unsigned(character'pos(text(idx)), 8));
+                        o_data <= TEXT_COLOR & std_logic_vector(to_unsigned(character'pos(text(idx)), 8));
                         state := sDraw;
                     else
                         state := sIdle;

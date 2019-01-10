@@ -1,14 +1,14 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.math_real.all;
 
 use work.snake_game.all;
 
 entity Food is
     generic(
         MAX_WIDTH  : natural := 80;
-        MAX_HEIGHT : natural := 30);
+        MAX_HEIGHT : natural := 30;
+        FOOD_COLOR : std_logic_vector (7 downto 0) := "00000100");
     port(
         i_clk       : in  std_logic;
         i_rst       : in  std_logic;
@@ -23,7 +23,6 @@ end entity Food;
 
 architecture behavioral of Food is
 begin
-    
     process(i_clk, i_rst)
         type t_State is (sIdle, sThrowFood);
         variable state : t_State;
@@ -50,7 +49,7 @@ begin
 
                     o_wen <= '1';
                     o_addr <= calcAddr((fx, fy));
-                    o_data <= "0000001000000011";
+                    o_data <= FOOD_COLOR & "00000011";
 
                     state := sIdle;
             end case;
