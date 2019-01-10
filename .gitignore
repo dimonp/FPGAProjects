@@ -57,4 +57,5 @@ PLLJ_PLLSPE_INFO.txt # The generated PLL specification file
 .project
 .library_mapping.xml
 .README.md.html
+readme.txt
 

@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.math_real.all;
 
 entity Logic is
     port(
@@ -17,7 +16,6 @@ entity Logic is
 end entity Logic;
 
 architecture behavioral of Logic is
-    
 begin
     
     process(i_clk, i_rst)
