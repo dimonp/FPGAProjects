@@ -5,7 +5,9 @@ use ieee.numeric_std.all;
 use work.snake_game.all;
 
 entity Snake is
-    generic(FIFO_MAX_SIZE : natural := 16);
+    generic(
+        FIFO_MAX_SIZE : natural := 16;
+        SNAKE_COLOR  : std_logic_vector (7 downto 0) := "00000010");
     port(
         i_clk     : in  std_logic;
         i_rst     : in  std_logic;
@@ -72,11 +74,11 @@ begin
                 when sHead =>
                     o_wen <= '1';
                     o_addr <= calcAddr(fifo(0));
-                    o_data <= "0000001000000010";
+                    o_data <= SNAKE_COLOR & "00000010";
                     state := sBody;
                 when sBody =>
                     o_addr <= calcAddr(fifo(1));
-                    o_data <= "0000001000000001";
+                    o_data <= SNAKE_COLOR & "00000001";
                     state := sTail;
                 when sTail =>
                     o_addr <= calcAddr(fifo(FIFO_MAX_SIZE-1));

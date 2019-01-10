@@ -24,10 +24,10 @@ begin
         variable score : natural range 0 to 255;
     begin
         if i_rst = '0' then
-            score := 0;
             o_busy <= '0';
             o_loose <= '0';
             o_food <= '1';
+            score := 0;
             state  := sIdle;
         elsif rising_edge(i_clk) then
             case state is
