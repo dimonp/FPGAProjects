@@ -12,7 +12,7 @@ entity Controller is
         INITIAL_Y   : natural := 10);
     port(
         i_clk     : in  std_logic;
-        i_rst     : in  std_logic;
+        i_nrst    : in  std_logic;
         i_ps2Code : in  std_logic_vector(7 downto 0);
         i_brake   : in  natural;
         i_en      : in  std_logic;
@@ -26,7 +26,7 @@ architecture behavioral of Controller is
 begin
     o_coords <= (xc, yc);
 
-    process(i_clk, i_rst, i_en)
+    process(i_clk, i_nrst, i_en)
         variable state   : t_Move_state;
         variable delta_x : integer;
         variable delta_y : integer;
@@ -80,7 +80,7 @@ begin
         end function updateY;
 
     begin
-        if i_rst = '0' then
+        if i_nrst = '0' then
             xc <= INITIAL_X;
             yc <= INITIAL_Y;
             state := sStop;

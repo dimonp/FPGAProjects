@@ -5,25 +5,24 @@ use ieee.numeric_std.all;
 entity Logic is
     port(
         i_clk       : in  std_logic;
-        i_rst       : in  std_logic;
+        i_nrst       : in  std_logic;
         i_en        : in  std_logic;
         i_eaten     : in std_logic_vector(7 downto 0);
         o_busy      : out std_logic;
         o_loose     : out std_logic;
         o_food      : out std_logic;
-        o_score     : out natural range 0 to 255
-    );
+        o_score     : out natural range 0 to 255);
 end entity Logic;
 
 architecture behavioral of Logic is
+    type t_State is (sIdle, sCheck);
 begin
-    
-    process(i_clk, i_rst)
-        type t_State is (sIdle, sCheck);
+
+    process(i_clk, i_nrst)
         variable state : t_State;
         variable score : natural range 0 to 255;
     begin
-        if i_rst = '0' then
+        if i_nrst = '0' then
             o_busy <= '0';
             o_loose <= '0';
             o_food <= '1';

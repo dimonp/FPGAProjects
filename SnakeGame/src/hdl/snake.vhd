@@ -10,7 +10,7 @@ entity Snake is
         SNAKE_COLOR  : std_logic_vector (7 downto 0) := "00000010");
     port(
         i_clk     : in  std_logic;
-        i_rst     : in  std_logic;
+        i_nrst    : in  std_logic;
         i_en      : in  std_logic;
         i_coords  : in  t_Coords;
         i_data    : in  std_logic_vector(15 downto 0);
@@ -18,12 +18,13 @@ entity Snake is
         o_wen     : out std_logic;
         o_addr    : out std_logic_vector (11 downto 0);
         o_data    : out std_logic_vector(15 downto 0);
-        o_eaten   : out std_logic_vector(7 downto 0)
-    );
+        o_eaten   : out std_logic_vector(7 downto 0));
 end entity Snake;
 
 architecture behavioral of Snake is
     type t_Coords_fifo is array (0 to FIFO_MAX_SIZE - 1) of t_Coords;
+    type t_Draw_state is (sIdle, sPrepare, sPreCollision, sCollision, sHead, sBody, sTail);
+
     signal fifo : t_Coords_fifo := (others => (others => 0));
 
     procedure updateFifo(coords : t_Coords) is
@@ -38,11 +39,10 @@ architecture behavioral of Snake is
     end procedure updateFifo;
 
 begin
-    process(i_clk, i_rst)
-        type t_Draw_state is (sIdle, sPrepare, sPreCollision, sCollision, sHead, sBody, sTail);
+    process(i_clk, i_nrst)
         variable state : t_Draw_State;
     begin
-        if i_rst = '0' then
+        if i_nrst = '0' then
             o_busy <= '0';
             o_wen <= '0';
             fifo <= (others => (others => 0));

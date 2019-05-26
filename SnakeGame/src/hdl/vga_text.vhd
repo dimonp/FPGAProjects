@@ -3,18 +3,22 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity VGA_text is
+    generic(
+        MAX_WIDTH  : natural := 80;
+        MAX_HEIGHT : natural := 30;
+        FOOD_COLOR : std_logic_vector (7 downto 0) := "00000100");
     port(
-        clock   : in std_logic;
-        reset   : in std_logic;
-        wen     : in std_logic;
-        addr    : in std_logic_vector (11 downto 0);
-        dataW   : in std_logic_vector(15 downto 0);
-        dataR   : out std_logic_vector(15 downto 0);
-        hsync   : out std_logic;
-        vsync   : out std_logic;
-        r       : out std_logic_vector(4 downto 0);
-        g       : out std_logic_vector(5 downto 0);
-        b       : out std_logic_vector(4 downto 0));
+        i_clock  : in std_logic;
+        i_reset  : in std_logic;
+        i_wen    : in std_logic;
+        i_addr   : in std_logic_vector (11 downto 0);
+        i_dataW  : in std_logic_vector(15 downto 0);
+        o_dataR  : out std_logic_vector(15 downto 0);
+        o_hsync  : out std_logic;
+        o_vsync  : out std_logic;
+        o_r      : out std_logic_vector(4 downto 0);
+        o_g      : out std_logic_vector(5 downto 0);
+        o_b      : out std_logic_vector(4 downto 0));
 end entity VGA_text;
 
 architecture behavioral of VGA_text is
@@ -31,7 +35,7 @@ architecture behavioral of VGA_text is
         5 => x"F81F", -- magenta 
         6 => x"FFE0", -- yellow
         7 => x"FFFF", -- white
-       others => x"FFFF");
+        others => x"FFFF");
 
     signal palleteAddr: natural range 0 to 31;
 
@@ -50,9 +54,9 @@ architecture behavioral of VGA_text is
     signal vgaColor         : std_logic_vector(15 downto 0);
 
     component ClockGen
-        port ( areset : in std_logic  := '0';
-               inclk0 : in std_logic;
-               c0     : out std_logic);
+        port ( areset   : in std_logic  := '0';
+               inclk0   : in std_logic;
+               c0       : out std_logic);
     end component;
     
     component VGA_sync
@@ -78,29 +82,29 @@ architecture behavioral of VGA_text is
     component VideoRAM
         port
         (
-            address_a   : in std_logic_vector (11 downto 0);
-            address_b   : in std_logic_vector (11 downto 0);
-            clock       : in std_logic  := '1';
-            data_a      : in std_logic_vector (15 downto 0);
-            data_b      : in std_logic_vector (15 downto 0);
-            wren_a      : in std_logic  := '0';
-            wren_b      : in std_logic  := '0';
-            q_a         : out std_logic_vector (15 downto 0);
-            q_b         : out std_logic_vector (15 downto 0)
+            address_a : in std_logic_vector (11 downto 0);
+            address_b : in std_logic_vector (11 downto 0);
+            clock     : in std_logic  := '1';
+            data_a    : in std_logic_vector (15 downto 0);
+            data_b    : in std_logic_vector (15 downto 0);
+            wren_a    : in std_logic  := '0';
+            wren_b    : in std_logic  := '0';
+            q_a       : out std_logic_vector (15 downto 0);
+            q_b       : out std_logic_vector (15 downto 0)
         );
     end component;
 
     component FontROM
         port (
-            address     : in std_logic_vector (11 downto 0);
-            clock       : in std_logic  := '1';
-            q           : out std_logic_vector (7 downto 0));
+            address : in std_logic_vector (11 downto 0);
+            clock   : in std_logic  := '1';
+            q       : out std_logic_vector (7 downto 0));
     end component;
 begin
     clockGen_inst : ClockGen port map (
-            areset => reset,
-            inclk0 => clock,
-            c0 => baseClk);
+            areset => i_reset,
+            inclk0 => i_clock,
+            c0     => baseClk);
 
     vgaSync_inst : VGA_sync 
         generic map (
@@ -118,25 +122,25 @@ begin
             V_BACK_PORCH    => 29)
         port map (
             clk      => vgaClk,
-            rst		 => reset,
+            rst		 => i_reset,
             vgaBlank => vgaBlank,
-            vSync    => vsync,
-            hSync    => hsync,
+            vSync    => o_vsync,
+            hSync    => o_hsync,
             pixelX   => pixelX,
             pixelY   => pixelY);
 
 
     videoRAM_inst : VideoRAM
         port map (
-            clock       => baseClk,
-            address_a   => textAddr,
-            address_b   => addr,
-            wren_a      => '0',
-            wren_b      => wen,
-            data_a      => (others=>'0'),
-            data_b      => dataW,
-            q_a         => textData,
-            q_b         => dataR);
+            clock     => baseClk,
+            address_a => textAddr,
+            address_b => i_addr,
+            wren_a    => '0',
+            wren_b    => i_wen,
+            data_a    => (others=>'0'),
+            data_b    => i_dataW,
+            q_a       => textData,
+            q_b       => o_dataR);
 
     fontROM_inst : FontROM 
         port map (
@@ -156,7 +160,9 @@ begin
         variable textX, textY : integer;
         variable symCode      : integer range 0 to 255;
     begin
-        if rising_edge(vgaClk) then
+        if i_reset = '1' then
+            vgaColor <= (others=>'0');
+        elsif rising_edge(vgaClk) then
             -- 0
             textX := (pixelX+5)/8;
             textY := pixelY/16;
@@ -184,11 +190,12 @@ begin
             else
                 vgaColor <= palleteColor(to_integer(unsigned(textData1(15 downto 12))));
             end if;
+
         end if;
     end process;
 
-    r <= vgaColor(15 downto 11) when vgaBlank = '0' else "00000";
-    g <= vgaColor(10 downto 5) when vgaBlank = '0' else "000000";
-    b <= vgaColor(4 downto 0) when vgaBlank = '0' else "00000";
+    o_r <= vgaColor(15 downto 11) when vgaBlank = '0' else "00000";
+    o_g <= vgaColor(10 downto 5) when vgaBlank = '0' else "000000";
+    o_b <= vgaColor(4 downto 0) when vgaBlank = '0' else "00000";
 
 end architecture behavioral;

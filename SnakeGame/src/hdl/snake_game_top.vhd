@@ -8,7 +8,7 @@ use work.snake_game.all;
 entity Snake_Game_top is
     port(
         clk         : in std_logic;
-        rst         : in std_logic;
+        nrst        : in std_logic;
         ps2Data     : in std_logic;
         ps2Clock    : in std_logic;
         vgaHs       : out std_logic;
@@ -24,7 +24,7 @@ architecture behavioral of Snake_Game_top is
     signal wen              : std_logic;
     signal cnt              : std_logic_vector(23 downto 0) := (others => '0');
 
-    signal ps2Code : std_logic_vector(7 downto 0);
+    signal ps2Code              : std_logic_vector(7 downto 0);
 
     signal coords               : t_Coords;
     signal random               : std_logic_vector(15 downto 0);
@@ -50,19 +50,21 @@ architecture behavioral of Snake_Game_top is
     signal food_addr            : std_logic_vector (11 downto 0);
     signal food_data            : std_logic_vector(15 downto 0);
 
+    signal test_data            : natural := 0;
+
     component VGA_text
         port (
-            clock   : in std_logic;
-            reset   : in std_logic;
-            wen     : in std_logic;
-            addr    : in std_logic_vector (11 downto 0);
-            dataW   : in std_logic_vector(15 downto 0);
-            dataR   : out std_logic_vector(15 downto 0);
-            hsync   : out std_logic;
-            vsync   : out std_logic;
-            r       : out std_logic_vector(4 downto 0);
-            g       : out std_logic_vector(5 downto 0);
-            b       : out std_logic_vector(4 downto 0));
+            i_clock : in std_logic;
+            i_reset : in std_logic;
+            i_wen   : in std_logic;
+            i_addr  : in std_logic_vector (11 downto 0);
+            i_dataW : in std_logic_vector(15 downto 0);
+            o_dataR : out std_logic_vector(15 downto 0);
+            o_hsync : out std_logic;
+            o_vsync : out std_logic;
+            o_r     : out std_logic_vector(4 downto 0);
+            o_g     : out std_logic_vector(5 downto 0);
+            o_b     : out std_logic_vector(4 downto 0));
     end component;
 
     component PS2_keyboard
@@ -82,7 +84,7 @@ architecture behavioral of Snake_Game_top is
             INITIAL_Y  : natural := 15);
         port(
             i_clk     : in  std_logic;
-            i_rst     : in  std_logic;
+            i_nrst    : in  std_logic;
             i_ps2Code : in  std_logic_vector(7 downto 0);
             i_brake   : in  natural;
             i_en      : in  std_logic;
@@ -92,7 +94,7 @@ architecture behavioral of Snake_Game_top is
     component Score
         port(
             i_clk       : in  std_logic;
-            i_rst       : in  std_logic;
+            i_nrst      : in  std_logic;
             i_en        : in  std_logic;
             i_score     : in  natural;
             o_busy      : out std_logic;
@@ -105,7 +107,7 @@ architecture behavioral of Snake_Game_top is
         generic(FIFO_MAX_SIZE  : natural);
         port(
             i_clk     : in  std_logic;
-            i_rst     : in  std_logic;
+            i_nrst    : in  std_logic;
             i_en      : in  std_logic;
             i_coords  : in  t_Coords;
             i_data    : in  std_logic_vector(15 downto 0);
@@ -124,14 +126,13 @@ architecture behavioral of Snake_Game_top is
             i_Seed_DV   : in  std_logic;
             i_Seed_Data : in  std_logic_vector(g_Num_Bits - 1 downto 0);
             o_LFSR_Data : out std_logic_vector(g_Num_Bits - 1 downto 0);
-            o_LFSR_Done : out std_logic
-        );
+            o_LFSR_Done : out std_logic);
     end component LFSR;
 
     component Logic
         port(
             i_clk       : in  std_logic;
-            i_rst       : in  std_logic;
+            i_nrst      : in  std_logic;
             i_en        : in  std_logic;
             i_eaten     : in std_logic_vector(7 downto 0);
             o_busy      : out std_logic;
@@ -146,13 +147,14 @@ architecture behavioral of Snake_Game_top is
             MAX_HEIGHT : natural := 30);
         port(
             i_clk       : in  std_logic;
-            i_rst       : in  std_logic;
+            i_nrst      : in  std_logic;
             i_en        : in  std_logic;
             i_rnd       : in  std_logic_vector(15 downto 0);
             o_addr      : out std_logic_vector (11 downto 0);
             o_data      : out std_logic_vector(15 downto 0);
+            o_test      : out natural range 0 to 255;
             o_busy      : out std_logic;
-            o_wen     : out std_logic);
+            o_wen     : out std_logic        );
         end component;
 begin
     addr <= snake_addr when snake_busy='1' else
@@ -166,17 +168,17 @@ begin
             (others=>'U');
 
     vgaText_inst : VGA_text port map (
-            clock => clk,
-            reset => not rst,
-            wen   => (not cnt(16)) and (snake_wen or score_wen or food_wen),
-            addr  => addr,
-            dataW => write_data,
-            dataR => read_data,
-            hsync => vgaHs,
-            vsync => vgaVs,
-            r => vgaR,
-            g => vgaG,
-            b => vgaB);
+            i_clock => clk,
+            i_reset => not nrst,
+            i_wen   => (not cnt(16)) and (snake_wen or score_wen or food_wen),
+            i_addr  => addr,
+            i_dataW => write_data,
+            o_dataR => read_data,
+            o_hsync => vgaHs,
+            o_vsync => vgaVs,
+            o_r => vgaR,
+            o_g => vgaG,
+            o_b => vgaB);
 
     keyboardPs2_inst: component ps2_keyboard
         port map(
@@ -193,7 +195,7 @@ begin
             MAX_HEIGHT => DISPLAY_HEIGHT-1)
         port map(
             i_clk      => cnt(16),
-            i_rst      => rst,
+            i_nrst     => nrst,
             i_ps2Code  => ps2Code,
             i_brake    => 100,
             i_en       => '1',
@@ -203,7 +205,7 @@ begin
         generic map(FIFO_MAX_SIZE  => 16)
         port map(
             i_clk     => cnt(16),
-            i_rst     => rst,
+            i_nrst    => nrst,
             i_en      => snake_en,
             i_coords  => coords,
             i_data    => read_data,
@@ -217,9 +219,9 @@ begin
     score_inst: component Score
         port map(
             i_clk   => cnt(16),
-            i_rst   => rst,
+            i_nrst  => nrst,
             i_en    => score_en,
-            i_score => logic_score,
+            i_score => test_data,
             o_busy  => score_busy,
             o_wen   => score_wen,
             o_addr  => score_addr,
@@ -242,7 +244,7 @@ begin
     logic_inst: component Logic
         port map(
             i_clk   => cnt(16),
-            i_rst   => rst,
+            i_nrst  => nrst,
             i_en    => logic_en,
             i_eaten => snake_eaten,
             o_loose => logic_loose,
@@ -257,11 +259,12 @@ begin
             MAX_HEIGHT => DISPLAY_HEIGHT-1)
         port map(
             i_clk   => cnt(16),
-            i_rst   => rst,
+            i_nrst  => nrst,
             i_en    => food_en,
             i_rnd   => random,
             o_addr  => food_addr,
             o_data  => food_data,
+            o_test  => open,
             o_busy  => food_busy,
             o_wen   => food_wen
         );
@@ -273,11 +276,12 @@ begin
         end if;
     end process;
 
-    process(cnt(17), rst)
+    process(cnt(17), nrst)
         type t_Game_state is (sIdle, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood, sLoose);
         variable state : t_Game_state;
     begin
-        if rst = '0' then
+        if nrst = '0' then
+            test_data <= test_data + 1;
             score_en <= '0';
             snake_en <= '0';
             logic_en <= '0';
@@ -287,7 +291,7 @@ begin
             case state is
                 when sIdle =>
                     state := sIdle;
-                    if ps2Code = x"75" or ps2Code = x"72" or ps2Code = x"6B" or ps2Code = x"74" then
+                    if ps2Code /= 0 then
                         state := sPreFood;
                     end if;
                 when sPreFood =>

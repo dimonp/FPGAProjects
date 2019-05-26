@@ -10,25 +10,25 @@ entity Food is
         MAX_HEIGHT : natural := 30;
         FOOD_COLOR : std_logic_vector (7 downto 0) := "00000100");
     port(
-        i_clk       : in  std_logic;
-        i_rst       : in  std_logic;
-        i_en        : in  std_logic;
-        i_rnd       : in  std_logic_vector(15 downto 0);
-        o_addr      : out std_logic_vector (11 downto 0);
-        o_data      : out  std_logic_vector(15 downto 0);
-        o_busy      : out std_logic;
-        o_wen     : out std_logic
-    );
+        i_clk     : in  std_logic;
+        i_nrst    : in  std_logic;
+        i_en      : in  std_logic;
+        i_rnd     : in  std_logic_vector(15 downto 0);
+        o_addr    : out std_logic_vector (11 downto 0);
+        o_data    : out std_logic_vector(15 downto 0);
+        o_test    : out natural range 0 to 255;
+        o_busy    : out std_logic;
+        o_wen     : out std_logic);
 end entity Food;
 
 architecture behavioral of Food is
+    type t_State is (sIdle, sThrowFood);
 begin
-    process(i_clk, i_rst)
-        type t_State is (sIdle, sThrowFood);
+    process(i_clk, i_nrst)
         variable state : t_State;
         variable fx, fy : natural;
     begin
-        if i_rst = '0' then
+        if i_nrst = '0' then
             o_busy <= '0';
             o_wen <= '0';
             state  := sIdle;
@@ -46,6 +46,8 @@ begin
                 when sThrowFood =>
                     fx := to_integer(unsigned(i_rnd(7 downto 0))) mod MAX_WIDTH;
                     fy := to_integer(unsigned(i_rnd(15 downto 8))) mod MAX_HEIGHT;
+
+                    o_test <= fy;
 
                     o_wen <= '1';
                     o_addr <= calcAddr((fx, fy));
