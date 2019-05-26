@@ -42,6 +42,8 @@ begin
                 state := sRunLeft;
             elsif i_ps2Code = x"74" and state /= sRunLeft then
                 state := sRunRight;
+            else
+                state := sStop;
             end if;
         end procedure changeState;
 
@@ -81,7 +83,8 @@ begin
         if i_rst = '0' then
             xc <= INITIAL_X;
             yc <= INITIAL_Y;
-            state  := sStop;
+            state := sStop;
+            brake := 0;
         elsif rising_edge(i_clk) and i_en = '1' then
             changeState(state);
 

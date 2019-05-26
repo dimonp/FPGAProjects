@@ -45,6 +45,7 @@ begin
         if i_rst = '0' then
             o_busy <= '0';
             o_wen <= '0';
+            fifo <= (others => (others => 0));
             state  := sIdle;
         elsif rising_edge(i_clk) then
             case state is
