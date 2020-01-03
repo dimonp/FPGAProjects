@@ -24,10 +24,18 @@ architecture behavioral of Snake_Game_top is
     signal wen              : std_logic;
     signal cnt              : std_logic_vector(23 downto 0) := (others => '0');
 
-    signal ps2Code              : std_logic_vector(7 downto 0);
+    signal ps2_code             : std_logic_vector(7 downto 0);
+    signal ps2_code_new         : std_logic;
 
     signal coords               : t_Coords;
     signal random               : std_logic_vector(15 downto 0);
+
+    signal controller_en        : std_logic;
+
+    signal fill_vram_en, fill_vram_busy : std_logic;
+    signal fill_vram_wen        : std_logic;
+    signal fill_vram_addr       : std_logic_vector (11 downto 0);
+    signal fill_vram_data       : std_logic_vector(15 downto 0);
 
     signal snake_en, snake_busy : std_logic;
     signal snake_wen            : std_logic;
@@ -67,6 +75,21 @@ architecture behavioral of Snake_Game_top is
             o_b     : out std_logic_vector(4 downto 0));
     end component;
 
+    component Fill_VRAM
+        generic(
+            MAX_WIDTH  : natural;
+            MAX_HEIGHT : natural;
+            FILL_VALUE : std_logic_vector (15 downto 0));
+        port(
+            i_clk     : in std_logic;
+            i_nrst    : in std_logic;
+            i_en      : in  std_logic;
+            o_addr    : out std_logic_vector (11 downto 0);
+            o_data    : out std_logic_vector(15 downto 0);
+            o_busy    : out std_logic;
+            o_wen     : out std_logic);
+    end component;
+
     component PS2_keyboard
         port(
             clk          : in  std_logic;
@@ -78,17 +101,18 @@ architecture behavioral of Snake_Game_top is
     
     component Controller is
         generic(
-            MAX_WIDTH  : natural := 80;
-            MAX_HEIGHT : natural := 30;
-            INITIAL_X  : natural := 40;
-            INITIAL_Y  : natural := 15);
+            MAX_WIDTH  : natural;
+            MAX_HEIGHT : natural;
+            INITIAL_X  : natural;
+            INITIAL_Y  : natural);
         port(
-            i_clk     : in  std_logic;
-            i_nrst    : in  std_logic;
-            i_ps2Code : in  std_logic_vector(7 downto 0);
-            i_brake   : in  natural;
-            i_en      : in  std_logic;
-            o_coords  : out t_Coords);
+            i_clk         : in  std_logic;
+            i_nrst        : in  std_logic;
+            i_ps2Code     : in  std_logic_vector(7 downto 0);
+            i_ps2CodeNew  : in  std_logic;
+            i_brake       : in  natural;
+            i_en          : in  std_logic;
+            o_coords      : out t_Coords);
     end component;
 
     component Score
@@ -152,17 +176,19 @@ architecture behavioral of Snake_Game_top is
             i_rnd       : in  std_logic_vector(15 downto 0);
             o_addr      : out std_logic_vector (11 downto 0);
             o_data      : out std_logic_vector(15 downto 0);
-            o_test      : out natural range 0 to 255;
+            o_test      : out natural;
             o_busy      : out std_logic;
             o_wen     : out std_logic        );
         end component;
 begin
-    addr <= snake_addr when snake_busy='1' else
+    addr <= fill_vram_addr when fill_vram_busy='1' else
+            snake_addr when snake_busy='1' else
             score_addr when score_busy='1' else
             food_addr when food_busy='1' else
             (others=>'U');
 
-    write_data <= snake_data when snake_busy='1' else
+    write_data <= fill_vram_data when fill_vram_busy='1' else
+            snake_data when snake_busy='1' else
             score_data when score_busy='1' else
             food_data when food_busy='1' else
             (others=>'U');
@@ -170,7 +196,7 @@ begin
     vgaText_inst : VGA_text port map (
             i_clock => clk,
             i_reset => not nrst,
-            i_wen   => (not cnt(16)) and (snake_wen or score_wen or food_wen),
+            i_wen   => (not cnt(16)) and (fill_vram_wen or snake_wen or score_wen or food_wen),
             i_addr  => addr,
             i_dataW => write_data,
             o_dataR => read_data,
@@ -180,26 +206,42 @@ begin
             o_g => vgaG,
             o_b => vgaB);
 
+    fill_vram_inst: component Fill_VRAM
+        generic map(
+            MAX_WIDTH  => 80,
+            MAX_HEIGHT => 30,
+            FILL_VALUE => (others => '0'))
+        port map(
+            i_clk   => cnt(16),
+            i_nrst  => nrst,
+            i_en    => fill_vram_en,
+            o_busy  => fill_vram_busy,
+            o_wen   => fill_vram_wen,
+            o_addr  => fill_vram_addr,
+            o_data  => fill_vram_data);
+
     keyboardPs2_inst: component ps2_keyboard
         port map(
             clk          => clk,
             ps2_clk      => ps2Clock,
             ps2_data     => ps2Data,
-            ps2_code_new => open,
-            ps2_code     => ps2Code
-        );
+            ps2_code_new => ps2_code_new,
+            ps2_code     => ps2_code);
 
     controller_inst: component Controller
         generic map(
             MAX_WIDTH  => DISPLAY_WIDTH,
-            MAX_HEIGHT => DISPLAY_HEIGHT-1)
+            MAX_HEIGHT => DISPLAY_HEIGHT-1,
+            INITIAL_X  => 40,
+            INITIAL_Y  => 10)
         port map(
-            i_clk      => cnt(16),
-            i_nrst     => nrst,
-            i_ps2Code  => ps2Code,
-            i_brake    => 100,
-            i_en       => '1',
-            o_coords   => coords);
+            i_clk         => cnt(16),
+            i_nrst        => nrst,
+            i_ps2Code     => ps2_code,
+            i_ps2CodeNew  => ps2_code_new,
+            i_brake       => 100,
+            i_en          => controller_en,
+            o_coords      => coords);
 
     snake_inst: component Snake
         generic map(FIFO_MAX_SIZE  => 16)
@@ -225,8 +267,7 @@ begin
             o_busy  => score_busy,
             o_wen   => score_wen,
             o_addr  => score_addr,
-            o_data  => score_data
-        );
+            o_data  => score_data);
 
     lfsr_inst: component LFSR
         generic map(
@@ -238,8 +279,7 @@ begin
             i_Seed_DV   => '0',
             i_Seed_Data => (others => '0'),
             o_LFSR_Data => random,
-            o_LFSR_Done => open
-        );
+            o_LFSR_Done => open);
 
     logic_inst: component Logic
         port map(
@@ -250,8 +290,7 @@ begin
             o_loose => logic_loose,
             o_food  => logic_food,
             o_score => logic_score,
-            o_busy  => logic_busy
-        );
+            o_busy  => logic_busy);
 
     food_inst: component Food
         generic map(
@@ -264,10 +303,9 @@ begin
             i_rnd   => random,
             o_addr  => food_addr,
             o_data  => food_data,
-            o_test  => open,
+            o_test  => test_data,
             o_busy  => food_busy,
-            o_wen   => food_wen
-        );
+            o_wen   => food_wen);
      
     process(clk) is
     begin
@@ -277,11 +315,12 @@ begin
     end process;
 
     process(cnt(17), nrst)
-        type t_Game_state is (sIdle, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood, sLoose);
+        type t_Game_state is (sIdle, sClearField, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood, sLoose);
         variable state : t_Game_state;
     begin
         if nrst = '0' then
-            test_data <= test_data + 1;
+            fill_vram_en <= '1';
+            controller_en <= '0';
             score_en <= '0';
             snake_en <= '0';
             logic_en <= '0';
@@ -291,9 +330,16 @@ begin
             case state is
                 when sIdle =>
                     state := sIdle;
-                    if ps2Code /= 0 then
-                        state := sPreFood;
+                    if ps2_code_new = '1' then
+                        state := sClearField;
                     end if;
+                when sClearField =>
+                    if fill_vram_busy = '1'  then
+                        fill_vram_en <= '0';
+                        state := sClearField;
+                    else
+                        state := sPreFood;
+                    end if;    
                 when sPreFood =>
                     if logic_food = '1' then
                         food_en <= '1';
@@ -331,6 +377,7 @@ begin
                     end if;    
                 when sPreSnake =>
                     snake_en <= '1';
+                    controller_en <= '1';
                     state := sSnake;
                 when sSnake =>
                     if snake_busy = '1' then
