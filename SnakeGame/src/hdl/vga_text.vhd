@@ -106,7 +106,7 @@ begin
             inclk0 => i_clock,
             c0     => baseClk);
 
-    vgaSync_inst : VGA_sync 
+    vgaSync_inst : VGA_sync
         generic map (
             -- 640 x 480 at 73 Hz
             -- Horizontal timing
@@ -156,12 +156,12 @@ begin
     end process;
 
 
-    process (vgaClk) is
+    process (vgaClk, i_reset) is
         variable textX, textY : integer;
         variable symCode      : integer range 0 to 255;
     begin
         if i_reset = '1' then
-            vgaColor <= (others=>'0');
+            vgaColor <= (0 => '1', 1 => '1', 2 => '1', 3 => '1', 4 => '1',others=>'0');
         elsif rising_edge(vgaClk) then
             -- 0
             textX := (pixelX+5)/8;
