@@ -177,7 +177,6 @@ architecture behavioral of Snake_Game_top is
             i_data    : in  std_logic_vector(15 downto 0);
             o_addr    : out std_logic_vector (11 downto 0);
             o_data    : out std_logic_vector(15 downto 0);
-            o_test    : out natural;
             o_busy    : out std_logic;
             o_wen     : out std_logic);
         end component;
@@ -305,7 +304,6 @@ begin
             i_data  => read_data,
             o_addr  => food_addr,
             o_data  => food_data,
-            o_test  => test_data,
             o_busy  => food_busy,
             o_wen   => food_wen);
      
