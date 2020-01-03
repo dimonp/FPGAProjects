@@ -27,7 +27,6 @@ begin
     process(i_clk, i_nrst)
         variable state : t_State;
         variable fx, fy : natural;
-        variable test : natural;
     begin
         if i_nrst = '0' then
             o_busy <= '0';

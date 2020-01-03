@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity Logic is
     port(
         i_clk       : in  std_logic;
-        i_nrst       : in  std_logic;
+        i_nrst      : in  std_logic;
         i_en        : in  std_logic;
         i_eaten     : in std_logic_vector(7 downto 0);
         o_busy      : out std_logic;
