@@ -3,9 +3,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity Logic is
+    generic(
+        EMPTY_SYM  : std_logic_vector (7 downto 0) := "00000000";
+        FOOD_SYM   : std_logic_vector (7 downto 0) := "00000011");
     port(
         i_clk       : in  std_logic;
-        i_nrst       : in  std_logic;
+        i_nrst      : in  std_logic;
         i_en        : in  std_logic;
         i_eaten     : in std_logic_vector(7 downto 0);
         o_busy      : out std_logic;
@@ -39,14 +42,16 @@ begin
                         state  := sIdle;
                     end if;
                 when sCheck =>
-                    if unsigned(i_eaten) = 0 then
+                    if i_eaten = EMPTY_SYM then
                         o_loose <= '0';
                         o_food <= '0';
-                    elsif unsigned(i_eaten) = 3 then
+                    elsif i_eaten = FOOD_SYM then
+                        -- throw new food
                         score := score + 1; 
                         o_loose <= '0';
                         o_food <= '1';
                     else
+                        -- game over
                         o_loose <= '1';
                         o_food <= '0';
                     end if;

@@ -8,6 +8,7 @@ entity Food is
     generic(
         MAX_WIDTH  : natural := 80;
         MAX_HEIGHT : natural := 30;
+        FOOD_SYM   : std_logic_vector (7 downto 0) := "00000011";
         FOOD_COLOR : std_logic_vector (7 downto 0) := "00000100");
     port(
         i_clk     : in  std_logic;
@@ -27,7 +28,6 @@ begin
     process(i_clk, i_nrst)
         variable state : t_State;
         variable fx, fy : natural;
-        variable test : natural;
     begin
         if i_nrst = '0' then
             o_busy <= '0';
@@ -57,7 +57,7 @@ begin
                     end if;
                 when sThrowFood =>
                     o_wen <= '1';
-                    o_data <= FOOD_COLOR & "00000011";
+                    o_data <= FOOD_COLOR & FOOD_SYM;
 
                     state := sIdle;
             end case;
