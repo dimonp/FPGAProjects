@@ -170,15 +170,16 @@ architecture behavioral of Snake_Game_top is
             MAX_WIDTH  : natural := 80;
             MAX_HEIGHT : natural := 30);
         port(
-            i_clk       : in  std_logic;
-            i_nrst      : in  std_logic;
-            i_en        : in  std_logic;
-            i_rnd       : in  std_logic_vector(15 downto 0);
-            o_addr      : out std_logic_vector (11 downto 0);
-            o_data      : out std_logic_vector(15 downto 0);
-            o_test      : out natural;
-            o_busy      : out std_logic;
-            o_wen     : out std_logic        );
+            i_clk     : in  std_logic;
+            i_nrst    : in  std_logic;
+            i_en      : in  std_logic;
+            i_rnd     : in  std_logic_vector(15 downto 0);
+            i_data    : in  std_logic_vector(15 downto 0);
+            o_addr    : out std_logic_vector (11 downto 0);
+            o_data    : out std_logic_vector(15 downto 0);
+            o_test    : out natural;
+            o_busy    : out std_logic;
+            o_wen     : out std_logic);
         end component;
 begin
     addr <= fill_vram_addr when fill_vram_busy='1' else
@@ -301,6 +302,7 @@ begin
             i_nrst  => nrst,
             i_en    => food_en,
             i_rnd   => random,
+            i_data  => read_data,
             o_addr  => food_addr,
             o_data  => food_data,
             o_test  => test_data,
