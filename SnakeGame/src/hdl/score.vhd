@@ -10,17 +10,19 @@ entity Score is
         SCORE_Y     : natural := 29;
         TEXT_COLOR  : std_logic_vector (7 downto 0) := "00000110");
     port(
-        i_clk       : in  std_logic;
-        i_rst       : in  std_logic;
-        i_en        : in  std_logic;
-        i_score     : in  natural;
-        o_busy      : out std_logic;
+        i_clk     : in  std_logic;
+        i_nrst    : in  std_logic;
+        i_en      : in  std_logic;
+        i_score   : in  natural;
+        o_busy    : out std_logic;
         o_wen     : out std_logic;
-        o_addr      : out std_logic_vector (11 downto 0);
-        o_data      : out std_logic_vector(15 downto 0));
+        o_addr    : out std_logic_vector (11 downto 0);
+        o_data    : out std_logic_vector(15 downto 0));
 end entity Score;
 
 architecture behavioral of Score is
+    type t_Draw_state is (sIdle, sPrepare, sDraw);
+
     function to_ascii(digit : unsigned(3 downto 0)) return character is
     begin
         return character'val(to_integer(digit(3 downto 0)) + 48);
@@ -54,8 +56,7 @@ architecture behavioral of Score is
         return bcd;
     end to_bcd;
 begin
-    process(i_clk, i_rst)
-        type t_Draw_state is (sIdle, sPrepare, sDraw);
+    process(i_clk, i_nrst)
         variable state : t_Draw_state;
     
         variable text   : string(1 to 9);
@@ -64,7 +65,7 @@ begin
         variable bcdY   : unsigned(11 downto 0);
         variable bcdS   : unsigned(11 downto 0);
     begin
-        if i_rst = '0' then
+        if i_nrst = '0' then
             o_busy <= '0';
             o_wen <= '0';
             state := sIdle;

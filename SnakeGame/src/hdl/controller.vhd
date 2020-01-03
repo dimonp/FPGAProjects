@@ -11,12 +11,13 @@ entity Controller is
         INITIAL_X   : natural := 40;
         INITIAL_Y   : natural := 10);
     port(
-        i_clk     : in  std_logic;
-        i_rst     : in  std_logic;
-        i_ps2Code : in  std_logic_vector(7 downto 0);
-        i_brake   : in  natural;
-        i_en      : in  std_logic;
-        o_coords  : out t_Coords);
+        i_clk         : in  std_logic;
+        i_nrst        : in  std_logic;
+        i_ps2Code     : in  std_logic_vector(7 downto 0);
+        i_ps2CodeNew  : in  std_logic;
+        i_brake       : in  natural;
+        i_en          : in  std_logic;
+        o_coords      : out t_Coords);
 end entity Controller;
 
 architecture behavioral of Controller is
@@ -26,7 +27,7 @@ architecture behavioral of Controller is
 begin
     o_coords <= (xc, yc);
 
-    process(i_clk, i_rst, i_en)
+    process(i_clk, i_nrst)
         variable state   : t_Move_state;
         variable delta_x : integer;
         variable delta_y : integer;
@@ -42,6 +43,8 @@ begin
                 state := sRunLeft;
             elsif i_ps2Code = x"74" and state /= sRunLeft then
                 state := sRunRight;
+            else
+                state := sStop;
             end if;
         end procedure changeState;
 
@@ -78,12 +81,18 @@ begin
         end function updateY;
 
     begin
-        if i_rst = '0' then
+        if i_nrst = '0' then
             xc <= INITIAL_X;
             yc <= INITIAL_Y;
-            state  := sStop;
+            state := sStop;
+            brake := 0;
+            delta_x := 0;
+            delta_y := 0;
         elsif rising_edge(i_clk) and i_en = '1' then
-            changeState(state);
+            
+            if i_ps2CodeNew = '1' then
+                changeState(state);
+            end if;
 
             if brake = 0 then
                 brake := i_brake;

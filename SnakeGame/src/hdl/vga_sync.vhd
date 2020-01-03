@@ -48,12 +48,10 @@ begin
 
     process (clk, rst) is
     begin
-        if rising_edge(clk) then
-            if rst = '1' then
-                hCounter <= 0;
-                vCounter <= 0;
-            end if;
-
+        if rst = '1' then
+            hCounter <= 0;
+            vCounter <= 0;
+        elsif rising_edge(clk) then
             if hCounter = H_TOTAL_PIX-1 then
                 hCounter <= 0;
 
