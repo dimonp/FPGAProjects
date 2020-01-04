@@ -70,13 +70,13 @@ architecture behavioral of VGA_text is
             V_SYNC_PULSE   : natural;
             V_BACK_PORCH   : natural);
         port(
-            clk      : in std_logic;
-            rst      : in std_logic;
-            vgaBlank : out  std_logic;
-            vSync    : out  std_logic;
-            hSync    : out  std_logic;
-            pixelX   : out  integer;
-            pixelY   : out  integer);
+            i_clock  : in std_logic;
+            i_rst    : in std_logic;
+            o_vgaBlank : out  std_logic;
+            o_vSync    : out  std_logic;
+            o_hSync    : out  std_logic;
+            o_pixelX   : out  integer;
+            o_pixelY   : out  integer);
     end component VGA_sync;
 
     component VideoRAM
@@ -121,13 +121,13 @@ begin
             V_SYNC_PULSE    => 2,
             V_BACK_PORCH    => 29)
         port map (
-            clk      => vgaClk,
-            rst		 => i_reset,
-            vgaBlank => vgaBlank,
-            vSync    => o_vsync,
-            hSync    => o_hsync,
-            pixelX   => pixelX,
-            pixelY   => pixelY);
+            i_clock  => vgaClk,
+            i_rst	 => i_reset,
+            o_vgaBlank => vgaBlank,
+            o_vSync    => o_vsync,
+            o_hSync    => o_hsync,
+            o_pixelX   => pixelX,
+            o_pixelY   => pixelY);
 
 
     videoRAM_inst : VideoRAM

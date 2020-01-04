@@ -58,8 +58,6 @@ architecture behavioral of Snake_Game_top is
     signal food_addr            : std_logic_vector (11 downto 0);
     signal food_data            : std_logic_vector(15 downto 0);
 
-    signal test_data            : natural := 0;
-
     component VGA_text
         port (
             i_clock : in std_logic;
@@ -263,7 +261,7 @@ begin
             i_clk   => cnt(16),
             i_nrst  => nrst,
             i_en    => score_en,
-            i_score => test_data,
+            i_score => logic_score,
             o_busy  => score_busy,
             o_wen   => score_wen,
             o_addr  => score_addr,
