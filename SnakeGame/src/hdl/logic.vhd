@@ -7,9 +7,9 @@ entity Logic is
         EMPTY_SYM  : std_logic_vector (7 downto 0) := "00000000";
         FOOD_SYM   : std_logic_vector (7 downto 0) := "00000011");
     port(
-        i_clk       : in  std_logic;
-        i_nrst      : in  std_logic;
-        i_en        : in  std_logic;
+        i_clk       : in std_logic;
+        i_nrst      : in std_logic;
+        i_en        : in std_logic;
         i_eaten     : in std_logic_vector(7 downto 0);
         o_busy      : out std_logic;
         o_loose     : out std_logic;

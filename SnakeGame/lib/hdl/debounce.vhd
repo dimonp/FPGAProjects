@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+--   https://www.digikey.com/eewiki/pages/viewpage.action?pageId=4980758
 --
 --   FileName:         debounce.vhd
 --   Dependencies:     none

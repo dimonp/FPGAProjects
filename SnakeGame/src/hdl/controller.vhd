@@ -48,8 +48,7 @@ begin
             end if;
         end procedure changeState;
 
-        function updateX(x     : natural range 0 to MAX_WIDTH-1;
-                         delta : integer)
+        function updateX(x : natural range 0 to MAX_WIDTH-1; delta : integer)
         return natural is
             variable tmp_x : integer;
         begin
@@ -64,8 +63,7 @@ begin
             return tmp_x;
         end function updateX;
 
-        function updateY(y     : natural range 0 to MAX_HEIGHT-1;
-                         delta : integer)
+        function updateY(y : natural range 0 to MAX_HEIGHT-1; delta : integer)
         return natural is
             variable tmp_y : integer;
         begin
@@ -88,36 +86,38 @@ begin
             brake := 0;
             delta_x := 0;
             delta_y := 0;
-        elsif rising_edge(i_clk) and i_en = '1' then
-            
-            if i_ps2CodeNew = '1' then
-                changeState(state);
-            end if;
+        elsif rising_edge(i_clk)then
 
-            if brake = 0 then
-                brake := i_brake;
-                case state is
-                    when sRunUp =>
-                        delta_x := 0;
-                        delta_y := -1;
-                    when sRunDown =>
-                        delta_x := 0;
-                        delta_y := 1;
-                    when sRunLeft =>
-                        delta_x := -1;
-                        delta_y := 0;
-                    when sRunRight =>
-                        delta_x := 1;
-                        delta_y := 0;
-                    when sStop =>
-                        delta_x := 0;
-                        delta_y := 0;
-                end case;
-    
-                xc <= updateX(xc, delta_x);
-                yc <= updateY(yc, delta_y);
-            else
-                brake := brake - 1;
+            if i_en = '1' then
+                if i_ps2CodeNew = '1' then
+                    changeState(state);
+                end if;
+
+                if brake = 0 then
+                    brake := i_brake;
+                    case state is
+                        when sRunUp =>
+                            delta_x := 0;
+                            delta_y := -1;
+                        when sRunDown =>
+                            delta_x := 0;
+                            delta_y := 1;
+                        when sRunLeft =>
+                            delta_x := -1;
+                            delta_y := 0;
+                        when sRunRight =>
+                            delta_x := 1;
+                            delta_y := 0;
+                        when sStop =>
+                            delta_x := 0;
+                            delta_y := 0;
+                    end case;
+
+                    xc <= updateX(xc, delta_x);
+                    yc <= updateY(yc, delta_y);
+                else
+                    brake := brake - 1;
+                end if;
             end if;
         end if;
     end process;
