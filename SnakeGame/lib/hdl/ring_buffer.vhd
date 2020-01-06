@@ -74,15 +74,11 @@ begin
   -- Update the head pointer in write
   PROC_HEAD : process(clk)
   begin
-    if rising_edge(clk) then
-      if rst = '1' then
-        head <= 0;
-      else
- 
-        if wr_en = '1' and full_i = '0' then
-          incr(head);
-        end if;
- 
+    if rst = '1' then
+      head <= 0;
+    elsif rising_edge(clk) then
+      if wr_en = '1' and full_i = '0' then
+        incr(head);
       end if;
     end if;
   end process;
@@ -90,18 +86,15 @@ begin
   -- Update the tail pointer on read and pulse valid
   PROC_TAIL : process(clk)
   begin
-    if rising_edge(clk) then
-      if rst = '1' then
+    if rst = '1' then
         tail <= 0;
         rd_valid <= '0';
-      else
-        rd_valid <= '0';
+    elsif rising_edge(clk) then
+      rd_valid <= '0';
  
-        if rd_en = '1' and empty_i = '0' then
-          incr(tail);
-          rd_valid <= '1';
-        end if;
- 
+      if rd_en = '1' and empty_i = '0' then
+        incr(tail);
+        rd_valid <= '1';
       end if;
     end if;
   end process;
