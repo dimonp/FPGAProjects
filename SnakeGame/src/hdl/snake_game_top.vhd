@@ -53,6 +53,7 @@ architecture behavioral of Snake_Game_top is
     signal logic_loose          : std_logic;
     signal logic_score          : natural range 0 to 255;
     signal logic_length         : natural range 0 to 255;
+    signal logic_brake          : natural range 0 to 255;
 
     signal food_en, food_busy   : std_logic;
     signal food_wen             : std_logic;
@@ -163,7 +164,8 @@ architecture behavioral of Snake_Game_top is
             o_loose     : out std_logic;
             o_food      : out std_logic;
             o_score     : out natural range 0 to 255;
-            o_length    : out natural range 0 to 255);
+            o_length    : out natural range 0 to 255;
+            o_brake     : out natural range 0 to 255);
         end component;
 
     component Food
@@ -197,7 +199,7 @@ begin
     vgaText_inst : VGA_text port map (
             i_clock => clk,
             i_reset => not nrst,
-            i_wen   => (not cnt(16)) and (fill_vram_wen or snake_wen or score_wen or food_wen),
+            i_wen   => (not cnt(4)) and (fill_vram_wen or snake_wen or score_wen or food_wen),
             i_addr  => addr,
             i_dataW => write_data,
             o_dataR => read_data,
@@ -213,7 +215,7 @@ begin
             MAX_HEIGHT => 30,
             FILL_VALUE => (others => '0'))
         port map(
-            i_clk   => cnt(16),
+            i_clk   => cnt(4),
             i_nrst  => nrst,
             i_en    => fill_vram_en,
             o_busy  => fill_vram_busy,
@@ -236,18 +238,18 @@ begin
             INITIAL_X  => 40,
             INITIAL_Y  => 10)
         port map(
-            i_clk         => cnt(16),
+            i_clk         => cnt(17),
             i_nrst        => nrst,
             i_ps2Code     => ps2_code,
             i_ps2CodeNew  => ps2_code_new,
-            i_brake       => 100,
+            i_brake       => logic_brake,
             i_en          => controller_en,
             o_coords      => coords);
 
     snake_inst: component Snake_v2
         generic map(FIFO_MAX_SIZE  => 128)
         port map(
-            i_clk     => cnt(16),
+            i_clk     => cnt(4),
             i_nrst    => nrst,
             i_en      => snake_en,
             i_coords  => coords,
@@ -262,7 +264,7 @@ begin
 
     score_inst: component Score
         port map(
-            i_clk   => cnt(16),
+            i_clk   => cnt(4),
             i_nrst  => nrst,
             i_en    => score_en,
             i_score => logic_score,
@@ -285,13 +287,14 @@ begin
 
     logic_inst: component Logic
         port map(
-            i_clk   => cnt(16),
+            i_clk   => cnt(4),
             i_nrst  => nrst,
             i_en    => logic_en,
             i_eaten => snake_eaten,
             o_loose => logic_loose,
             o_food  => logic_food,
             o_score => logic_score,
+            o_brake => logic_brake,
             o_length => logic_length,
             o_busy  => logic_busy);
 
@@ -300,7 +303,7 @@ begin
             MAX_WIDTH => DISPLAY_WIDTH,
             MAX_HEIGHT => DISPLAY_HEIGHT-1)
         port map(
-            i_clk   => cnt(16),
+            i_clk   => cnt(4),
             i_nrst  => nrst,
             i_en    => food_en,
             i_rnd   => random,
@@ -317,7 +320,7 @@ begin
         end if;
     end process;
 
-    process(cnt(17), nrst)
+    process(cnt(5), nrst)
         type t_Game_state is (sIdle, sClearField, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood, sLoose);
         variable state : t_Game_state;
     begin
@@ -329,7 +332,7 @@ begin
             logic_en <= '0';
             food_en <= '0';
             state  := sIdle;
-        elsif rising_edge(cnt(17)) then
+        elsif rising_edge(cnt(5)) then
             case state is
                 when sIdle =>
                     state := sIdle;

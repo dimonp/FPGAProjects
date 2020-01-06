@@ -117,6 +117,8 @@ begin
                             snake_tail.yc <= to_integer(unsigned(fifo_read_data(15 downto 8)));
                         end if;
 
+                        fifo_write_data <= std_logic_vector(to_unsigned(snake_head.yc, 8)) & std_logic_vector(to_unsigned(snake_head.xc, 8));
+
                         state := sPreCollision;
                     else
                         state := sHead;
@@ -124,7 +126,6 @@ begin
                 when sPreCollision =>
                     fifo_read_en <= '0';
                     fifo_write_en <= '1';
-                    fifo_write_data <= std_logic_vector(to_unsigned(i_coords.yc, 8)) & std_logic_vector(to_unsigned(i_coords.xc, 8));
 
                     o_addr <= calcAddr(i_coords);
                     state := sCollision;

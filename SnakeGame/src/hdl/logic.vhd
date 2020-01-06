@@ -15,7 +15,8 @@ entity Logic is
         o_loose     : out std_logic;
         o_food      : out std_logic;
         o_score     : out natural range 0 to 255;
-        o_length    : out natural range 0 to 255);
+        o_length    : out natural range 0 to 255;
+        o_brake     : out natural range 0 to 255);
 end entity Logic;
 
 architecture behavioral of Logic is
@@ -23,9 +24,11 @@ architecture behavioral of Logic is
 
     signal score  : natural range 0 to 255;
     signal length : natural range 0 to 255;
+    signal brake : natural range 0 to 255;
 begin
     o_score <= score;
     o_length <= length;
+    o_brake <= brake;
 
     process(i_clk, i_nrst)
         variable state  : t_State;
@@ -36,6 +39,7 @@ begin
             o_food <= '1';
             score <= 0;
             length <= 16;
+            brake <= 32;
             state  := sIdle;
         elsif rising_edge(i_clk) then
             case state is
@@ -52,10 +56,19 @@ begin
                         o_loose <= '0';
                         o_food <= '0';
                     elsif i_eaten = FOOD_SYM then
-                        -- throw new food
-                        score <= score + 1;
-                        length <= length + 1;
+                        if score < 255 then
+                            score <= score + 1;
+                        end if;
+                        
+                        if brake < 255 then
+                            length <= length + 1;
+                        end if;
+                        
+                        if brake > 0 and score mod 4 = 0 then
+                            brake <= brake - 1;
+                        end if;
 
+                        -- throw new food
                         o_loose <= '0';
                         o_food <= '1';
                     else

@@ -15,7 +15,7 @@ entity Controller is
         i_nrst        : in  std_logic;
         i_ps2Code     : in  std_logic_vector(7 downto 0);
         i_ps2CodeNew  : in  std_logic;
-        i_brake       : in  natural;
+        i_brake       : in  natural range 0 to 255;
         i_en          : in  std_logic;
         o_coords      : out t_Coords);
 end entity Controller;
@@ -31,7 +31,7 @@ begin
         variable state   : t_Move_state;
         variable delta_x : integer;
         variable delta_y : integer;
-        variable brake   : natural := 0;
+        variable brake   : natural range 0 to 255;
 
         procedure changeState(currentState : t_Move_state) is
         begin
@@ -86,7 +86,7 @@ begin
             brake := 0;
             delta_x := 0;
             delta_y := 0;
-        elsif rising_edge(i_clk)then
+        elsif rising_edge(i_clk) then
 
             if i_en = '1' then
                 if i_ps2CodeNew = '1' then
