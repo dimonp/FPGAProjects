@@ -9,6 +9,7 @@
 
 [VGA Signal Timing](http://tinyvga.com/vga-timing)  
 [Introduce the VGA video standard](http://www.eng.ucy.ac.cy/theocharides/Courses/ECE664/VGA.pdf)
+[The Logic Space] https://www.digikey.com/eewiki/display/LOGIC/Home
 
 ## Harware 
 FPGA Cyclone IV EP4CE10F17C8  

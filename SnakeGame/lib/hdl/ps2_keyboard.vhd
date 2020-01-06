@@ -1,4 +1,5 @@
 --------------------------------------------------------------------------------
+--   https://www.digikey.com/eewiki/pages/viewpage.action?pageId=28278929
 --
 --   FileName:         ps2_keyboard.vhd
 --   Dependencies:     debounce.vhd

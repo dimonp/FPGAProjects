@@ -94,6 +94,9 @@ set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_location_assignment PIN_M15 -to nrst
+set_global_assignment -name VHDL_FILE src/hdl/snake_v2.vhd
+set_global_assignment -name VHDL_FILE lib/hdl/ring_buffer.vhd
+set_global_assignment -name SDC_FILE SnakeGame.sdc
 set_global_assignment -name VHDL_FILE src/hdl/fill_vram.vhd
 set_global_assignment -name VHDL_FILE src/hdl/snake_game_pkg.vhd
 set_global_assignment -name VHDL_FILE src/hdl/logic.vhd
