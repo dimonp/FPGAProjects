@@ -52,6 +52,7 @@ architecture behavioral of Snake_Game_top is
     signal logic_food           : std_logic;
     signal logic_loose          : std_logic;
     signal logic_score          : natural range 0 to 255;
+    signal logic_length         : natural range 0 to 255;
 
     signal food_en, food_busy   : std_logic;
     signal food_wen             : std_logic;
@@ -108,7 +109,7 @@ architecture behavioral of Snake_Game_top is
             i_nrst        : in  std_logic;
             i_ps2Code     : in  std_logic_vector(7 downto 0);
             i_ps2CodeNew  : in  std_logic;
-            i_brake       : in  natural;
+            i_brake       : in  natural range 0 to 255;
             i_en          : in  std_logic;
             o_coords      : out t_Coords);
     end component;
@@ -125,13 +126,14 @@ architecture behavioral of Snake_Game_top is
             o_data      : out std_logic_vector(15 downto 0));
     end component;
 
-    component Snake
+    component Snake_v2
         generic(FIFO_MAX_SIZE  : natural);
         port(
             i_clk     : in  std_logic;
             i_nrst    : in  std_logic;
             i_en      : in  std_logic;
             i_coords  : in  t_Coords;
+            i_length  : in natural range 0 to 255;
             i_data    : in  std_logic_vector(15 downto 0);
             o_busy    : out std_logic;
             o_wen     : out std_logic;
@@ -160,7 +162,8 @@ architecture behavioral of Snake_Game_top is
             o_busy      : out std_logic;
             o_loose     : out std_logic;
             o_food      : out std_logic;
-            o_score     : out natural range 0 to 255);
+            o_score     : out natural range 0 to 255;
+            o_length    : out natural range 0 to 255);
         end component;
 
     component Food
@@ -241,13 +244,14 @@ begin
             i_en          => controller_en,
             o_coords      => coords);
 
-    snake_inst: component Snake
-        generic map(FIFO_MAX_SIZE  => 16)
+    snake_inst: component Snake_v2
+        generic map(FIFO_MAX_SIZE  => 128)
         port map(
             i_clk     => cnt(16),
             i_nrst    => nrst,
             i_en      => snake_en,
             i_coords  => coords,
+            i_length  => logic_length,
             i_data    => read_data,
             o_busy    => snake_busy,
             o_wen     => snake_wen,
@@ -288,6 +292,7 @@ begin
             o_loose => logic_loose,
             o_food  => logic_food,
             o_score => logic_score,
+            o_length => logic_length,
             o_busy  => logic_busy);
 
     food_inst: component Food
