@@ -17,6 +17,9 @@ PS/2 keyboard
 640x480 16-bit RGB video   
 
 
+![Screenshot](snake.jpg)
+
+
 ##### Pin assigments
 
 | Signal   |      Pin      |
