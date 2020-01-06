@@ -26,6 +26,7 @@ architecture behavioral of Snake_Game_top is
 
     signal ps2_code             : std_logic_vector(7 downto 0);
     signal ps2_code_new         : std_logic;
+    signal ps2_code_new_prev    : std_logic;
 
     signal coords               : t_Coords;
     signal random               : std_logic_vector(15 downto 0);
@@ -333,10 +334,12 @@ begin
             food_en <= '0';
             state  := sIdle;
         elsif rising_edge(cnt(5)) then
+            ps2_code_new_prev <= ps2_code_new;
+
             case state is
                 when sIdle =>
                     state := sIdle;
-                    if ps2_code_new = '1' then
+                    if ps2_code_new = '1' and ps2_code_new_prev = '0' then
                         state := sClearField;
                     end if;
                 when sClearField =>
@@ -396,7 +399,7 @@ begin
                     if logic_loose = '1' then
                         state := sLoose;
                     else
-                        state := sIdle;
+                        state := sPreFood;
                     end if;    
             end case;
         end if;

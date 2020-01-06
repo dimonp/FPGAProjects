@@ -2,7 +2,8 @@
 create_clock -period 20.000 -name {clock_50M} [get_ports {clk}]
 create_clock -period 100000 -name {clock_10k} [get_ports {ps2Clock}]
 
-create_generated_clock -divide_by 1000 -source [get_ports {clk}] -name clk_div_16 {cnt[16]}
+create_generated_clock -divide_by 32 -source [get_ports {clk}] -name clk_div_4 {cnt[4]}
+create_generated_clock -divide_by 64 -source [get_ports {clk}] -name clk_div_5 {cnt[5]}
 create_generated_clock -divide_by 1000 -source [get_ports {clk}] -name clk_div_17 {cnt[17]}
 
 create_generated_clock -divide_by 100000 -source [get_ports {clk}] -name debounce {PS2_keyboard:keyboardPs2_inst|debounce:debounce_ps2_clk|result}
