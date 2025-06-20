@@ -99,6 +99,7 @@ architecture behavioral of VGA_text is
     signal vgaColor     : std_logic_vector(15 downto 0);
 
 begin
+    -- Base clock 63MHz
     clkGen : Clk_gen port map (
             areset => reset,
             inclk0 => clock,
@@ -151,7 +152,9 @@ begin
 
     process(baseClk) is
     begin
+        -- Divide base clock
         if rising_edge(baseClk) then
+				-- VGA pixel clock 31.5MHz (640x480 73Hz)
             vgaClk <= not vgaClk;
         end if;
     end process;
