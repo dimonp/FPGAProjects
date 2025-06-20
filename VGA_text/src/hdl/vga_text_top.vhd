@@ -12,7 +12,6 @@ entity VGA_text_top is
         vgaR    : out std_logic_vector(4 downto 0);
         vgaG    : out std_logic_vector(5 downto 0);
         vgaB    : out std_logic_vector(4 downto 0));
-
 end entity VGA_text_top;
 
 architecture behavioral of VGA_text_top is
@@ -23,6 +22,7 @@ architecture behavioral of VGA_text_top is
 
     type state_type is (xp, yp, xn, yn, itp, fin);
 
+    signal videoClk : std_logic;
     signal wen      : std_logic := '0';
     signal addr     : natural range 0 to 2400;
     signal addrH, addrT : natural range 0 to 2400;
@@ -54,32 +54,46 @@ architecture behavioral of VGA_text_top is
         -- insert into position zero
         fifo(0) <= (xc=>x, yc=>y);
     end procedure updateFifo;
+    
+    component Clk_gen
+        port ( areset : in std_logic  := '0';
+               inclk0 : in std_logic;
+               c0     : out std_logic);
+    end component;
 
     component VGA_text
         port (
-            clock   : in std_logic;
-            reset   : in std_logic;
-            wen     : in std_logic;
-            addr    : in natural range 0 to 2400;
-            data    : in std_logic_vector(15 downto 0);
-            hsync   : out std_logic;
-            vsync   : out std_logic;
-            r       : out std_logic_vector(4 downto 0);
-            g       : out std_logic_vector(5 downto 0);
-            b       : out std_logic_vector(4 downto 0));
+            vgaClock : in std_logic;
+            memClock : in std_logic;
+            reset    : in std_logic;
+            wen      : in std_logic;
+            addr     : in natural range 0 to 2400;
+            data     : in std_logic_vector(15 downto 0);
+            hsync    : out std_logic;
+            vsync    : out std_logic;
+            rColor   : out std_logic_vector(4 downto 0);
+            gColor   : out std_logic_vector(5 downto 0);
+            bColor   : out std_logic_vector(4 downto 0));
     end component;
 begin
+    -- Base clock 25MHz
+    clkGen : Clk_gen port map (
+            areset => not rst,
+            inclk0 => clk,
+            c0 => videoClk);
+
     vgaText_inst : VGA_text port map (
-            clock => clk,
-            reset => not rst,
-            wen   => not q(20),
-            addr  => addr,
-            data  => data,
-            hsync => vgaHs,
-            vsync => vgaVs,
-            r => vgaR,
-            g => vgaG,
-            b => vgaB);
+            vgaClock  => videoClk,
+            memClock  => clk,
+            reset     => not rst,
+            wen       => not q(20),
+            addr      => addr,
+            data      => data,
+            hsync     => vgaHs,
+            vsync     => vgaVs,
+            rColor    => vgaR,
+            gColor    => vgaG,
+            bColor    => vgaB);
 
     process(clk) is
     begin
