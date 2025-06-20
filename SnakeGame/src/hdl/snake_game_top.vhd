@@ -314,13 +314,17 @@ begin
             o_busy  => food_busy,
             o_wen   => food_wen);
      
+    -- control state counter increment process
     process(clk) is
     begin
         if rising_edge(clk) then
             cnt <= cnt + 1;
+            --clock period is 20ns, counter is 23 bits, should roll over every 524ms
+            --trigger each time counter rolls over back to zero
         end if;
     end process;
 
+    -- general game process definition
     process(cnt(5), nrst)
         type t_Game_state is (sIdle, sClearField, sPreLogic, sLogic, sPreShowScore, sShowScore, sPreSnake, sSnake, sPreFood, sFood, sLoose);
         variable state : t_Game_state;
@@ -341,6 +345,7 @@ begin
                     state := sIdle;
                     if ps2_code_new = '1' and ps2_code_new_prev = '0' then
                         state := sClearField;
+                        -- start new game
                     end if;
                 when sClearField =>
                     if fill_vram_busy = '1'  then
@@ -348,6 +353,7 @@ begin
                         state := sClearField;
                     else
                         state := sPreFood;
+                        -- put food on the field
                     end if;    
                 when sPreFood =>
                     if logic_food = '1' then
@@ -363,6 +369,7 @@ begin
                         state := sFood;
                     else
                         state := sPreLogic;
+                        -- do game logic
                     end if;    
                 when sPreLogic =>
                     logic_en <= '1';
@@ -373,6 +380,7 @@ begin
                         state := sLogic;
                     else
                         state := sPreShowScore;
+                        -- show score
                     end if;    
                 when sPreShowScore =>
                     score_en <= '1';
@@ -383,6 +391,7 @@ begin
                         state := sShowScore;
                     else
                         state := sPreSnake;
+                        -- draw snake
                     end if;    
                 when sPreSnake =>
                     snake_en <= '1';
@@ -394,9 +403,11 @@ begin
                         state := sSnake;
                     else
                         state := sLoose;
+                        -- check loose state
                     end if;    
                 when sLoose =>
                     if logic_loose = '1' then
+                        -- game over
                         state := sLoose;
                     else
                         state := sPreFood;
