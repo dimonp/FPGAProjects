@@ -4,46 +4,46 @@ use ieee.numeric_std.all;
 
 entity VGA_text is
     port(
-        clock   : in std_logic; -- VGA clock * 2
-        reset   : in std_logic;
-        wen     : in std_logic;
-        addr    : in natural range 0 to 2400;
-        data    : in std_logic_vector(15 downto 0);
-        hsync   : out std_logic;
-        vsync   : out std_logic;
-        r       : out std_logic_vector(4 downto 0);
-        g       : out std_logic_vector(5 downto 0);
-        b       : out std_logic_vector(4 downto 0));
+        vgaClock : in std_logic; -- (25MHz)
+        sysClock : in std_logic; -- VGA clock * 2 (50MHz)
+        nrst     : in std_logic;
+        wen      : in std_logic;
+        addr     : in natural range 0 to 2400;
+        wdata    : in std_logic_vector(15 downto 0);
+        hSync    : out std_logic;
+        vSync    : out std_logic;
+        hBlank   : out std_logic;
+        vBlank   : out std_logic;
+        rColor   : out std_logic_vector(4 downto 0);
+        gColor   : out std_logic_vector(5 downto 0);
+        bColor   : out std_logic_vector(4 downto 0));
 end entity VGA_text;
 
 architecture behavioral of VGA_text is
     constant DISPLAY_WIDTH : natural := 80;
     constant DISPLAY_HEIGHT : natural := 30;
-
-    component Clk_gen
-        port ( areset : in std_logic  := '0';
-               inclk0 : in std_logic;
-               c0     : out std_logic);
-    end component;
-    
+  
     component VGA_sync
         generic (
+            -- Horizontal timing (line)
             H_ACTIVE_VIDEO : natural;
             H_FRONT_PORCH  : natural;
             H_SYNC_PULSE   : natural;
             H_BACK_PORCH   : natural;
+            -- Vertical timing (frame)
             V_ACTIVE_VIDEO : natural;
             V_FRONT_PORCH  : natural;
             V_SYNC_PULSE   : natural;
             V_BACK_PORCH   : natural);
         port(
-            clk      : in std_logic;
-            rst      : in std_logic;
-            vgaBlank : out  std_logic;
-            vSync    : out  std_logic;
-            hSync    : out  std_logic;
-            pixelX   : out  integer;
-            pixelY   : out  integer);
+            i_clock  : in std_logic;
+            i_nrst   : in std_logic;
+            o_syncH  : out  std_logic;
+            o_syncV  : out  std_logic;
+            o_blankH : out  std_logic;
+            o_blankV : out  std_logic;
+            o_pixelX : out  integer;
+            o_pixelY : out  integer);
     end component VGA_sync;
 
     component Font_ROM
@@ -84,112 +84,109 @@ architecture behavioral of VGA_text is
 
     signal palleteAddr: natural range 0 to 31;
 
-    signal baseClk          : std_logic;
-    signal vgaClk           : std_logic := '0';
     signal vgaBlank         : std_logic;
     signal pixelX, pixelY   : integer;
     signal textAddr         : natural;
-    signal textData, textData0: std_logic_vector(15 downto 0);
-    signal symAddr          : natural;
-    signal symData          : std_logic_vector(0 to 7);
+    signal textData, textDataM : std_logic_vector(15 downto 0);
+    signal charAddr         : natural;
+    signal charData         : std_logic_vector(0 to 7);
     
-    signal symX, symX0      : integer;
-    signal symY             : integer;
-
-    signal vgaColor     : std_logic_vector(15 downto 0);
+    signal vgaColor         : std_logic_vector(15 downto 0);
 
 begin
-    -- Base clock 63MHz
-    clkGen : Clk_gen port map (
-            areset => reset,
-            inclk0 => clock,
-            c0 => baseClk);
-
     vgaSync : VGA_sync 
         generic map (
-            -- 640 x 480 at 73 Hz
+            -- 640 x 480 at 60 Hz
             -- Horizontal timing
             H_ACTIVE_VIDEO  => 640,
-            H_FRONT_PORCH   => 24,
-            H_SYNC_PULSE    => 40,
-            H_BACK_PORCH    => 128,
-            -- 640 x 480 at 73 Hz
+            H_FRONT_PORCH   => 16,
+            H_SYNC_PULSE    => 96,
+            H_BACK_PORCH    => 48,
+            -- 640 x 480 at 60 Hz
             -- Vertical timing
             V_ACTIVE_VIDEO  => 480,
-            V_FRONT_PORCH   => 9,
+            V_FRONT_PORCH   => 10,
             V_SYNC_PULSE    => 2,
-            V_BACK_PORCH    => 29)
+            V_BACK_PORCH    => 33)
         port map (
-            clk      => vgaClk,
-            rst		 => reset,
-            vgaBlank => vgaBlank,
-            vSync    => vsync,
-            hSync    => hsync,
-            pixelX   => pixelX,
-            pixelY   => pixelY);
+            i_clock  => vgaClock,
+            i_nrst   => nrst,
+            o_syncV  => vSync,
+            o_syncH  => hSync,
+            o_blankH => hBlank,
+            o_blankV => vBlank,
+            o_pixelX => pixelX,
+            o_pixelY => pixelY);
 
+    --  Memory cell 16bit:
+    --  xxxx_xxxx_xxxxxxxx
+    --   bg   fg    char
+    -- color color symbol 
     videoRAM : Video_RAM
         generic map (
             RAM_SIZE => DISPLAY_WIDTH*DISPLAY_HEIGHT,
-            RAM_FILE => "../ram.mif"
+            RAM_FILE => "ram.hex"
         ) 
         port map (
-            clk     => baseClk,
+            clk     => sysClock,
             raddr   => textAddr,
             waddr   => addr,
             we      => wen,
-            data    => data,
+            data    => wdata,
             q       => textData);
 
     fontROM : Font_ROM 
         generic map (
-            ROM_FILE => "../8X16.hex",
+            ROM_FILE => "8X16.hex",
             ROM_SIZE => 256*16) 
         port map (
-            clk   => baseClk,
-            addr  => symAddr,
-            q     => symData);
-
-    process(baseClk) is
-    begin
-        -- Divide base clock
-        if rising_edge(baseClk) then
-				-- VGA pixel clock 31.5MHz (640x480 73Hz)
-            vgaClk <= not vgaClk;
-        end if;
-    end process;
-
-
-    process (vgaClk) is
+            clk   => sysClock,
+            addr  => charAddr,
+            q     => charData);
+            
+    process (vgaClock) is
+        variable prePosX      : integer;
         variable textX, textY : integer;
-        variable symCode      : integer range 0 to 255;
+        variable charCode     : integer range 0 to 255;
+        variable charX, charY : integer;
+        variable textAddrC : integer;
     begin
-        if rising_edge(vgaClk) then
-            textX := (pixelX + 3)/8;
+        if rising_edge(vgaClock) then
+            prePosX := (pixelX+8) mod 8; -- precalculate one cell before
+            
+            textX := (pixelX+3)/8; -- precalculate at least three pixels before
             textY := pixelY/16;
+            
+            charX := (pixelX+1) mod 8; -- precalculate one pixel before
+            charY := pixelY mod 16;
+            
+            textAddrC := textY*DISPLAY_WIDTH + textX;
 
-            -- 0
-            symX <= (pixelX + 3) mod 8;
-            symY <= pixelY mod 16;
-            textAddr <= textY*DISPLAY_WIDTH + textX;
-
-            -- 1
-            symCode := to_integer(unsigned(textData(7 downto 0)));
-            symAddr <= symCode*16 + symY;
-            textData0 <= textData; 
-            symX0 <= symX;
-
-            -- 2
-            if symData(symX0) = '1' then
-                vgaColor <= palleteColor(to_integer(unsigned(textData0(11 downto 8))));
+            if prePosX = 5 then
+                if textAddrC >= 0 and textAddrC < 2400 then
+                    textAddr <= textAddrC;
+                end if;
+            elsif prePosX = 6 then
+                charCode := to_integer(unsigned(textData(7 downto 0)));
+                charAddr <= charCode*16 + charY;
+                textDataM <= textData;
+            end if;
+            
+            if charData(charX) = '1' then
+                -- foreground
+                vgaColor <= palleteColor(to_integer(unsigned(textDataM(11 downto 8))));
             else
-                vgaColor <= palleteColor(to_integer(unsigned(textData0(15 downto 12))));
+                -- background
+                vgaColor <= palleteColor(to_integer(unsigned(textDataM(15 downto 12))));
             end if;
         end if;
     end process;
-
-    r <= vgaColor(15 downto 11) when vgaBlank = '0' else "00000";
-    g <= vgaColor(10 downto 5) when vgaBlank = '0' else "000000";
-    b <= vgaColor(4 downto 0) when vgaBlank = '0' else "00000";
-
+    
+    vgaBlank <= hBlank or vBlank;
+   
+    -- get color from palette
+    rColor <= vgaColor(15 downto 11) when vgaBlank = '0' else "00000";
+    gColor <= vgaColor(10 downto 5) when vgaBlank = '0' else "000000";
+    bColor <= vgaColor(4 downto 0) when vgaBlank = '0' else "00000";
+   
 end architecture behavioral;

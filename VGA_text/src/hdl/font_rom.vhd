@@ -27,13 +27,16 @@ architecture rtl of Font_ROM is
     signal rom : Memory_t;
     attribute ram_init_file : string;
     attribute ram_init_file of rom : signal is ROM_FILE;
+
+    signal addr_reg : natural range 0 to ROM_SIZE-1;
 begin
 
     process(clk)
     begin
         if(rising_edge(clk)) then
-            q <= rom(addr);
+            addr_reg <= addr;
         end if;
     end process;
 
+    q <= rom(addr_reg);
 end rtl;

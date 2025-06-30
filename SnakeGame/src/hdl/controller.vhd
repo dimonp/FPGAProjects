@@ -25,8 +25,6 @@ architecture behavioral of Controller is
 
     signal xc, yc : natural;
 begin
-    o_coords <= (xc, yc);
-
     process(i_clk, i_nrst)
         variable state   : t_Move_state;
         variable delta_x : integer;
@@ -122,4 +120,6 @@ begin
         end if;
     end process;
 
+    o_coords <= (xc, yc);
+    
 end architecture behavioral;

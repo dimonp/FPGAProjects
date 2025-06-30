@@ -21,14 +21,23 @@ architecture behavioral of VGA_text_top is
     constant DONE_X     : natural := 35;
     constant DONE_Y     : natural := 6;
 
-    type state_type is (xp, yp, xn, yn, itp, fin);
+    type state_type is (fill, xp, yp, xn, yn, itp, fin);
 
+    signal vgaClk   : std_logic;
     signal wen      : std_logic := '0';
     signal addr     : natural range 0 to 2400;
-    signal addrH, addrT : natural range 0 to 2400;
     signal data     : std_logic_vector(15 downto 0);
     signal q        : std_logic_vector(23 downto 0) := (others => '0');
     signal isDone   : boolean := false;
+    
+    signal fill_vram_en   : std_logic := '0';
+    signal fill_vram_busy : std_logic;
+    signal fill_vram_wen  : std_logic;
+    signal fill_vram_addr : natural range 0 to 2400;
+    signal fill_vram_data : std_logic_vector(15 downto 0);
+
+    signal write_addr  : natural range 0 to 2400;
+    signal write_data  : std_logic_vector(15 downto 0);    
 
     type t_Coords is record
         xc : natural range 0 to 79;
@@ -54,32 +63,80 @@ architecture behavioral of VGA_text_top is
         -- insert into position zero
         fifo(0) <= (xc=>x, yc=>y);
     end procedure updateFifo;
+    
+    component Fill_VRAM
+        generic(
+            MAX_WIDTH  : natural := 80;
+            MAX_HEIGHT : natural := 30);
+        port(
+            i_clk     : in std_logic;
+            i_nrst    : in std_logic;
+            i_en      : in  std_logic;
+            o_addr    : out natural range 0 to 2400;
+            o_data    : out std_logic_vector(15 downto 0);
+            o_busy    : out std_logic;
+            o_wen     : out std_logic);
+    end component;
+
 
     component VGA_text
-        port (
-            clock   : in std_logic;
-            reset   : in std_logic;
-            wen     : in std_logic;
-            addr    : in natural range 0 to 2400;
-            data    : in std_logic_vector(15 downto 0);
-            hsync   : out std_logic;
-            vsync   : out std_logic;
-            r       : out std_logic_vector(4 downto 0);
-            g       : out std_logic_vector(5 downto 0);
-            b       : out std_logic_vector(4 downto 0));
+        port(
+            vgaClock : in std_logic; -- (25MHz)
+            sysClock : in std_logic; -- VGA clock * 2 (50MHz)
+            nrst     : in std_logic;
+            wen      : in std_logic;
+            addr     : in natural range 0 to 2400;
+            wdata    : in std_logic_vector(15 downto 0);
+            hSync    : out std_logic;
+            vSync    : out std_logic;
+            hBlank   : out std_logic;
+            vBlank   : out std_logic;
+            rColor   : out std_logic_vector(4 downto 0);
+            gColor   : out std_logic_vector(5 downto 0);
+            bColor   : out std_logic_vector(4 downto 0));
     end component;
+    
+    component Clk_gen
+        port ( areset : in std_logic  := '0';
+               inclk0 : in std_logic;
+               c0     : out std_logic);
+    end component;
+
 begin
+    write_addr <= fill_vram_addr when fill_vram_busy='1' else addr;
+    write_data <= fill_vram_data when fill_vram_busy='1' else data;
+
+    clkGen : Clk_gen port map (
+            areset => not rst,
+            inclk0 => clk,
+            c0 => vgaClk);
+            
+    fill_vram_inst: component Fill_VRAM
+        generic map(
+            MAX_WIDTH  => 80,
+            MAX_HEIGHT => 30)
+        port map(
+            i_clk   => q(4),
+            i_nrst  => rst,
+            i_en    => fill_vram_en,
+            o_busy  => fill_vram_busy,
+            o_wen   => fill_vram_wen,
+            o_addr  => fill_vram_addr ,
+            o_data  => fill_vram_data);
+            
+
     vgaText_inst : VGA_text port map (
-            clock => clk,
-            reset => not rst,
+            vgaClock => vgaClk,
+            sysClock => clk,
+            nrst  => rst,
             wen   => not q(20),
-            addr  => addr,
-            data  => data,
-            hsync => vgaHs,
-            vsync => vgaVs,
-            r => vgaR,
-            g => vgaG,
-            b => vgaB);
+            addr  => write_addr,
+            wdata  => write_data,
+            hSync => vgaHs,
+            vSync => vgaVs,
+            rColor => vgaR,
+            gColor => vgaG,
+            bColor => vgaB);
 
     process(clk) is
     begin
@@ -100,10 +157,18 @@ begin
             x := 0;
             y := 0;
             it:= 0;
-            state := xp;
+            state := fill;
             isDone <= false;
+            fill_vram_en <= '1';
         elsif rising_edge(q(21)) then
             case state is
+                when fill =>
+                    if fill_vram_busy = '1'  then
+                        fill_vram_en <= '0';
+                        state := fill;
+                    else
+                        state := xp;
+                    end if;    
                 when xp =>
                     if x = 79-it then
                         state := yp;
@@ -133,7 +198,7 @@ begin
                         state := yn;
                     end if;
                 when itp =>
-                    if it = 10 then
+                    if it = 14 then
                         state := fin;
                     else
                         it := it + 1;

@@ -60,20 +60,31 @@ architecture behavioral of Snake_Game_top is
     signal food_wen             : std_logic;
     signal food_addr            : std_logic_vector (11 downto 0);
     signal food_data            : std_logic_vector(15 downto 0);
-
+    
+    signal vgaClk           : std_logic;
+  
+    component ClockGen
+        port ( areset   : in std_logic  := '0';
+               inclk0   : in std_logic;
+               c0       : out std_logic);
+    end component;
+    
     component VGA_text
         port (
-            i_clock : in std_logic;
-            i_reset : in std_logic;
-            i_wen   : in std_logic;
-            i_addr  : in std_logic_vector (11 downto 0);
-            i_dataW : in std_logic_vector(15 downto 0);
-            o_dataR : out std_logic_vector(15 downto 0);
-            o_hsync : out std_logic;
-            o_vsync : out std_logic;
-            o_r     : out std_logic_vector(4 downto 0);
-            o_g     : out std_logic_vector(5 downto 0);
-            o_b     : out std_logic_vector(4 downto 0));
+            i_clockVga : in std_logic; -- (25MHz)
+            i_clockMem : in std_logic; -- VGA clock * 2 (50MHz)
+            i_nrst   : in std_logic;
+            i_wen    : in std_logic;
+            i_addr   : in std_logic_vector (11 downto 0);
+            i_dataW  : in std_logic_vector(15 downto 0);
+            o_dataR  : out std_logic_vector(15 downto 0);
+            o_syncH  : out std_logic;
+            o_syncV  : out std_logic;
+            o_blankH : out std_logic;
+            o_blankV : out std_logic;
+            o_colorR : out std_logic_vector(4 downto 0);
+            o_colorG : out std_logic_vector(5 downto 0);
+            o_colorB : out std_logic_vector(4 downto 0));
     end component;
 
     component Fill_VRAM
@@ -197,18 +208,24 @@ begin
             food_data when food_busy='1' else
             (others=>'U');
 
+    clockGen_inst : ClockGen port map (
+            areset => not nrst,
+            inclk0 => clk,
+            c0     => vgaClk);
+            
     vgaText_inst : VGA_text port map (
-            i_clock => clk,
-            i_reset => not nrst,
+            i_clockVga => vgaClk,
+            i_clockMem => clk,
+            i_nrst => nrst,
             i_wen   => (not cnt(4)) and (fill_vram_wen or snake_wen or score_wen or food_wen),
             i_addr  => addr,
             i_dataW => write_data,
             o_dataR => read_data,
-            o_hsync => vgaHs,
-            o_vsync => vgaVs,
-            o_r => vgaR,
-            o_g => vgaG,
-            o_b => vgaB);
+            o_syncH => vgaHs,
+            o_syncV => vgaVs,
+            o_colorR => vgaR,
+            o_colorG => vgaG,
+            o_colorB => vgaB);
 
     fill_vram_inst: component Fill_VRAM
         generic map(
@@ -338,15 +355,10 @@ begin
             food_en <= '0';
             state  := sIdle;
         elsif rising_edge(cnt(5)) then
-            ps2_code_new_prev <= ps2_code_new;
 
             case state is
                 when sIdle =>
-                    state := sIdle;
-                    if ps2_code_new = '1' and ps2_code_new_prev = '0' then
-                        state := sClearField;
-                        -- start new game
-                    end if;
+                    state := sClearField;
                 when sClearField =>
                     if fill_vram_busy = '1'  then
                         fill_vram_en <= '0';

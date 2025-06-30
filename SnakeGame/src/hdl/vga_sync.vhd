@@ -16,16 +16,16 @@ entity VGA_sync is
         V_BACK_PORCH   : natural);
     port(
         i_clock  : in std_logic;
-        i_rst    : in std_logic;
-        o_vgaBlank : out  std_logic;
-        o_vSync    : out  std_logic;
-        o_hSync    : out  std_logic;
-        o_pixelX   : out  integer;
-        o_pixelY   : out  integer
-    );
+        i_nrst   : in std_logic;
+        o_syncH  : out  std_logic;
+        o_syncV  : out  std_logic;
+        o_blankH : out  std_logic;
+        o_blankV : out  std_logic;
+        o_pixelX : out  integer;
+        o_pixelY : out  integer);
 end entity VGA_sync;
 
-architecture rtl of VGA_sync is
+architecture behavioral of VGA_sync is
     constant H_BLANK_PIX    : natural := H_FRONT_PORCH + H_SYNC_PULSE + H_BACK_PORCH;
     constant H_TOTAL_PIX    : natural := H_BLANK_PIX + H_ACTIVE_VIDEO;
 
@@ -35,20 +35,9 @@ architecture rtl of VGA_sync is
     signal vCounter : integer range 0 to V_TOTAL_PIX-1 := 0;
     signal hCounter : integer range 0 to H_TOTAL_PIX-1 := 0;
 begin
-    o_vgaBlank <= '1' when ((vCounter < V_BLANK_PIX) or (hCounter < H_BLANK_PIX)) else '0';
-
-    -- Polarity of vertical sync pulse is negative
-    o_vSync <= '0' when ((vCounter >= V_FRONT_PORCH) and (vCounter < V_FRONT_PORCH + V_SYNC_PULSE)) else '1';
-    
-    -- Polarity of horizontal sync pulse is negative.
-    o_hSync <= '0' when ((hCounter >= H_FRONT_PORCH) and (hCounter < H_FRONT_PORCH + H_SYNC_PULSE)) else '1';
-
-    o_pixelX <= hCounter - H_BLANK_PIX;
-    o_pixelY <= vCounter - V_BLANK_PIX;
-
-    process (i_clock, i_rst) is
+    process (i_clock, i_nrst) is
     begin
-        if i_rst = '1' then
+        if i_nrst = '0' then
             hCounter <= 0;
             vCounter <= 0;
         elsif rising_edge(i_clock) then
@@ -66,4 +55,16 @@ begin
         end if;
     end process;
 
-end architecture rtl;
+    o_blankH <= '1' when (hCounter < H_BLANK_PIX) else '0';
+    o_blankV <= '1' when (vCounter < V_BLANK_PIX) else '0';
+
+    -- Polarity of vertical sync pulse is negative
+    o_syncV <= '0' when ((vCounter >= V_FRONT_PORCH) and (vCounter < V_FRONT_PORCH + V_SYNC_PULSE)) else '1';
+    
+    -- Polarity of horizontal sync pulse is negative.
+    o_syncH <= '0' when ((hCounter >= H_FRONT_PORCH) and (hCounter < H_FRONT_PORCH + H_SYNC_PULSE)) else '1';
+
+    o_pixelX <= hCounter - H_BLANK_PIX;
+    o_pixelY <= vCounter - V_BLANK_PIX;
+    
+end architecture behavioral;

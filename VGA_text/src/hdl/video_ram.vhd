@@ -31,8 +31,10 @@ architecture rtl of Video_RAM is
     signal ram : memory_t;
     attribute ram_init_file : string;
     attribute ram_init_file of ram : signal is RAM_FILE;
+    attribute ramstyle : string;
+    attribute ramstyle of ram : signal is "M9K";
 
-    -- Register to hold the address 
+-- Register to hold the address 
     signal addr_reg : natural range 0 to RAM_SIZE-1;
 begin
 
